@@ -9,7 +9,7 @@
  * - Direct HTTP Fetch to FastAPI backend endpoints.
  * - Automatic payload serialization and error handling.
  * - Unwraps paginated responses ({ total, items } -> items).
- * - Automatic resilient fallback to mock data if backend is offline.
+ * - Automatic resilient fallback to localStorage mock store if backend is offline.
  */
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -82,14 +82,28 @@ const api = {
       const qs = query.toString() ? `?${query.toString()}` : '';
       const response = await this.request(`/issues${qs}`);
 
-      // FastAPI returns { total: N, items: [...] }
+      let list = [];
+      // FastAPI returns { total: N, items: [...] } or array
       if (response && Array.isArray(response.items)) {
-        return response.items;
+        list = response.items;
+      } else if (Array.isArray(response)) {
+        list = response;
       }
-      if (Array.isArray(response)) {
-        return response;
+
+      // Sync fetched live issues to local fallback store
+      if (list.length > 0 && window.mockIssuesStore) {
+        list.forEach((item) => {
+          const idx = window.mockIssuesStore.findIndex((m) => m.id === item.id);
+          if (idx >= 0) {
+            window.mockIssuesStore[idx] = { ...window.mockIssuesStore[idx], ...item };
+          } else {
+            window.mockIssuesStore.unshift(item);
+          }
+        });
+        if (window.saveMockStore) window.saveMockStore();
       }
-      return [];
+
+      return list;
     } catch (error) {
       console.warn('Connecting to live backend failed for getIssues, using local store fallback:', error.message);
       return this._mockGetIssues(filters);
@@ -110,6 +124,12 @@ const api = {
 
     try {
       const issue = await this.request(`/issues/${numericId}`);
+      if (issue && window.mockIssuesStore) {
+        const idx = window.mockIssuesStore.findIndex((m) => m.id === issue.id);
+        if (idx >= 0) window.mockIssuesStore[idx] = { ...window.mockIssuesStore[idx], ...issue };
+        else window.mockIssuesStore.unshift(issue);
+        if (window.saveMockStore) window.saveMockStore();
+      }
       return issue;
     } catch (error) {
       console.warn(`Connecting to live backend failed for getIssueById(${numericId}), using local store:`, error.message);
@@ -126,8 +146,8 @@ const api = {
    */
   async createIssue(issueData) {
     const payload = {
-      title: issueData.title.trim(),
-      description: issueData.description.trim(),
+      title: (issueData.title || '').trim(),
+      description: (issueData.description || '').trim(),
       category: issueData.category || "Other",
       latitude: parseFloat(issueData.latitude),
       longitude: parseFloat(issueData.longitude),
@@ -147,6 +167,8 @@ const api = {
         body: JSON.stringify(payload)
       });
       console.log('✅ Created issue in FastAPI backend:', created);
+      // Also cache in local store for seamless UI persistence
+      this._cacheIssue(created);
       return created;
     } catch (error) {
       console.warn('Connecting to live backend failed for createIssue, saving to local store:', error.message);
@@ -181,6 +203,7 @@ const api = {
         body: JSON.stringify(payload)
       });
       console.log('✅ Updated issue in FastAPI backend:', updated);
+      this._cacheIssue(updated);
       return updated;
     } catch (error) {
       console.warn(`Connecting to live backend failed for updateIssueStatus(${numericId}), using local store:`, error.message);
@@ -229,8 +252,19 @@ const api = {
     }
   },
 
+  _cacheIssue(issue) {
+    if (!window.mockIssuesStore) window.mockIssuesStore = [];
+    const idx = window.mockIssuesStore.findIndex((i) => i.id === issue.id);
+    if (idx >= 0) {
+      window.mockIssuesStore[idx] = { ...window.mockIssuesStore[idx], ...issue };
+    } else {
+      window.mockIssuesStore.unshift(issue);
+    }
+    if (window.saveMockStore) window.saveMockStore();
+  },
+
   // ============================================================================
-  // Safe Offline / Fallback In-Memory Handlers
+  // Safe Offline / Fallback In-Memory & LocalStorage Handlers
   // ============================================================================
   _mockGetIssues(filters = {}) {
     let results = window.mockIssuesStore ? [...window.mockIssuesStore] : [];
@@ -261,7 +295,7 @@ const api = {
   _mockCreateIssue(payload) {
     const now = new Date().toISOString();
     const newId = (window.mockIssuesStore && window.mockIssuesStore.length > 0)
-      ? Math.max(...window.mockIssuesStore.map((i) => i.id)) + 1
+      ? Math.max(...window.mockIssuesStore.map((i) => Number(i.id) || 0)) + 1
       : 1;
 
     const newIssue = {
@@ -273,7 +307,7 @@ const api = {
     };
 
     if (!window.mockIssuesStore) window.mockIssuesStore = [];
-    window.mockIssuesStore.push(newIssue);
+    window.mockIssuesStore.unshift(newIssue);
 
     if (!window.mockUpdatesStore) window.mockUpdatesStore = [];
     window.mockUpdatesStore.push({
@@ -284,6 +318,8 @@ const api = {
       updated_by: newIssue.created_by,
       created_at: now
     });
+
+    if (window.saveMockStore) window.saveMockStore();
 
     return { ...newIssue, updates: [window.mockUpdatesStore[window.mockUpdatesStore.length - 1]] };
   },
@@ -305,6 +341,8 @@ const api = {
       updated_by: updated_by,
       created_at: now
     });
+
+    if (window.saveMockStore) window.saveMockStore();
 
     return this._mockGetIssueById(id);
   },

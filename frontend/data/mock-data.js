@@ -2,19 +2,8 @@
  * ==============================================================================
  * CIVICFIX — Safe Sample / Mock Data Store (data/mock-data.js)
  * ==============================================================================
- * Standardized database mock models matching FastAPI SQLAlchemy schema:
- * 
- * Issue structure:
- * {
- *   id, title, description, category, status, priority, latitude, longitude,
- *   address, image_path, ai_summary, ai_category, ai_priority, ai_suggested_action,
- *   created_by, assigned_to, created_at, updated_at
- * }
- * 
- * IssueUpdate structure:
- * {
- *   id, issue_id, status, comment, updated_by, created_at
- * }
+ * Standardized database mock models matching FastAPI SQLAlchemy schema.
+ * Persists to localStorage to retain submitted reports across page navigations.
  */
 
 // Initial Seed Users (Resident & Admin)
@@ -186,11 +175,47 @@ const INITIAL_MOCK_UPDATES = [
   }
 ];
 
-// In-Memory mutable storage for active session
-let mockIssuesStore = JSON.parse(JSON.stringify(INITIAL_MOCK_ISSUES));
-let mockUpdatesStore = JSON.parse(JSON.stringify(INITIAL_MOCK_UPDATES));
+// Persistent storage using localStorage with fallback
+function loadStoredIssues() {
+  try {
+    const raw = localStorage.getItem('civicfix_issues');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not read from localStorage:', e);
+  }
+  return JSON.parse(JSON.stringify(INITIAL_MOCK_ISSUES));
+}
+
+function loadStoredUpdates() {
+  try {
+    const raw = localStorage.getItem('civicfix_updates');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('Could not read from localStorage:', e);
+  }
+  return JSON.parse(JSON.stringify(INITIAL_MOCK_UPDATES));
+}
+
+// In-Memory & LocalStorage mutable storage
+let mockIssuesStore = loadStoredIssues();
+let mockUpdatesStore = loadStoredUpdates();
 
 // Global export for mock-api layer
 window.MOCK_USERS = MOCK_USERS;
 window.mockIssuesStore = mockIssuesStore;
 window.mockUpdatesStore = mockUpdatesStore;
+
+window.saveMockStore = function() {
+  try {
+    localStorage.setItem('civicfix_issues', JSON.stringify(window.mockIssuesStore));
+    localStorage.setItem('civicfix_updates', JSON.stringify(window.mockUpdatesStore));
+  } catch (e) {
+    console.warn('Could not save to localStorage:', e);
+  }
+};
