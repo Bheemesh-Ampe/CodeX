@@ -27,7 +27,7 @@ DEMO_ISSUES = [
     {
         "title": "Severe Pothole on Elm Street",
         "description": "Deep tire-damaging pothole located right near the pedestrian crossing. Several cars have swerved dangerously to avoid it.",
-        "category": "Pothole",
+        "category": "Road Damage",
         "status": "IN_PROGRESS",
         "priority": "HIGH",
         "latitude": 37.774929,
@@ -35,14 +35,15 @@ DEMO_ISSUES = [
         "address": "742 Elm Street, Downtown",
         "image_path": "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "High-risk pothole hazard in high-traffic pedestrian crossing zone.",
-        "ai_category": "Pothole",
+        "ai_category": "Road Damage",
         "ai_priority": "HIGH",
         "ai_suggested_action": "Immediate cold mix asphalt patch within 24h.",
+        "ai_status": "success",
     },
     {
         "title": "Flickering Streetlight Near Elementary School",
         "description": "The overhead street light on the corner has been flickering and completely goes out after 9 PM, creating unsafe walking conditions for families.",
-        "category": "Streetlight & Electrical",
+        "category": "Street Light",
         "status": "REPORTED",
         "priority": "MEDIUM",
         "latitude": 37.783333,
@@ -50,44 +51,47 @@ DEMO_ISSUES = [
         "address": "450 Oak Avenue, Sunset District",
         "image_path": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "Flickering illumination near school safety corridor.",
-        "ai_category": "Streetlight & Electrical",
+        "ai_category": "Street Light",
         "ai_priority": "MEDIUM",
         "ai_suggested_action": "Dispatch municipal lighting technician for ballast inspection.",
+        "ai_status": "success",
     },
     {
         "title": "Overflowing Public Garbage Dumpster",
         "description": "Public recycling and trash bins are overflowing onto the sidewalk. Attracting stray animals and generating foul odor.",
-        "category": "Garbage & Waste",
-        "status": "IN_REVIEW",
+        "category": "Garbage/Waste",
+        "status": "ACKNOWLEDGED",
         "priority": "MEDIUM",
         "latitude": 37.769040,
         "longitude": -122.446747,
         "address": "120 Market Street, Castro",
         "image_path": "https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "Sanitation backlog: Waste overflow in high foot-traffic zone.",
-        "ai_category": "Garbage & Waste",
+        "ai_category": "Garbage/Waste",
         "ai_priority": "MEDIUM",
         "ai_suggested_action": "Schedule emergency sanitation pickup route.",
+        "ai_status": "success",
     },
     {
         "title": "Broken Water Main Leaking onto Roadway",
         "description": "Clean water is gushing from an underground pipe crack and flooding the right-hand lane. Pressure has reduced in nearby homes.",
-        "category": "Water & Drainage",
+        "category": "Water Leakage",
         "status": "IN_PROGRESS",
-        "priority": "CRITICAL",
+        "priority": "HIGH",
         "latitude": 37.755800,
         "longitude": -122.422500,
         "address": "88 Mission Blvd, Mission District",
         "image_path": "https://images.unsplash.com/photo-1584467735815-f778f274e296?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "Critical infrastructure failure: Water main rupture with roadway flood risk.",
-        "ai_category": "Water & Drainage",
-        "ai_priority": "CRITICAL",
+        "ai_category": "Water Leakage",
+        "ai_priority": "HIGH",
         "ai_suggested_action": "Immediate water isolation valve closure and emergency pipe repair team dispatch.",
+        "ai_status": "success",
     },
     {
         "title": "Obscured Stop Sign by Overgrown Branches",
         "description": "A stop sign at the intersection is completely hidden by tree branches, causing near-miss collisions every morning.",
-        "category": "Road & Traffic Safety",
+        "category": "Public Safety",
         "status": "RESOLVED",
         "priority": "HIGH",
         "latitude": 37.790100,
@@ -95,14 +99,15 @@ DEMO_ISSUES = [
         "address": "Intersection of Pine & Taylor St",
         "image_path": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "Traffic safety hazard: Obscured regulatory signage at intersection.",
-        "ai_category": "Road & Traffic Safety",
+        "ai_category": "Public Safety",
         "ai_priority": "HIGH",
         "ai_suggested_action": "Trim foliage obstructing line of sight to stop sign.",
+        "ai_status": "success",
     },
     {
         "title": "Damaged Playground Swing at Memorial Park",
         "description": "One of the child swings has a snapped chain and exposed sharp metal edges. Hazard for young children.",
-        "category": "Public Parks & Greenery",
+        "category": "Public Safety",
         "status": "REPORTED",
         "priority": "LOW",
         "latitude": 37.769900,
@@ -110,9 +115,10 @@ DEMO_ISSUES = [
         "address": "Golden Gate Memorial Playground",
         "image_path": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80",
         "ai_summary": "Park playground equipment damage presenting minor hazard to children.",
-        "ai_category": "Public Parks & Greenery",
+        "ai_category": "Public Safety",
         "ai_priority": "LOW",
         "ai_suggested_action": "Replace swing seat and chain assembly during weekly park round.",
+        "ai_status": "success",
     },
 ]
 
@@ -172,14 +178,14 @@ def seed_demo_data(db: Session, force: bool = False) -> int:
         db.add(initial_update)
 
         # Subsequent status updates for realistic demo history
-        if issue.status in ["IN_REVIEW", "IN_PROGRESS", "RESOLVED"]:
-            review_update = IssueUpdate(
+        if issue.status in ["ACKNOWLEDGED", "IN_REVIEW", "IN_PROGRESS", "RESOLVED"]:
+            ack_update = IssueUpdate(
                 issue_id=issue.id,
-                status="IN_REVIEW",
-                comment="City Works reviewed and validated the report.",
+                status="ACKNOWLEDGED",
+                comment="City Works reviewed and acknowledged the report.",
                 updated_by=admin_user.id if admin_user else None,
             )
-            db.add(review_update)
+            db.add(ack_update)
 
         if issue.status in ["IN_PROGRESS", "RESOLVED"]:
             progress_update = IssueUpdate(
@@ -206,4 +212,3 @@ def seed_demo_data(db: Session, force: bool = False) -> int:
 
 # Backwards compatibility alias
 DEMO_REPORTS = DEMO_ISSUES
-

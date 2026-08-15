@@ -1,6 +1,6 @@
 """SQLAlchemy Issue Model."""
 
-from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey, Index, desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.session import Base
@@ -63,7 +63,7 @@ class Issue(Base):
         "IssueUpdate",
         back_populates="issue",
         cascade="all, delete-orphan",
-        order_by="IssueUpdate.created_at.desc()",
+        order_by="desc(IssueUpdate.id)",
     )
 
     # Table indexes for high-performance querying
