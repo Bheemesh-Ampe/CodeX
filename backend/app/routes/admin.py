@@ -18,6 +18,20 @@ router = APIRouter(prefix="/admin", tags=["Administrator"])
 
 
 @router.get(
+    "/stats",
+    response_model=IssueStatsResponse,
+    summary="Get issue statistics (Administrator)",
+    description="Provides aggregated issue counts by status, category, and priority.",
+)
+def admin_get_stats(
+    db: Session = Depends(get_db),
+) -> IssueStatsResponse:
+    """Fetch breakdown metrics for issues."""
+    stats = issue_service.get_stats(db=db)
+    return IssueStatsResponse(**stats)
+
+
+@router.get(
     "/issues",
     response_model=List[IssueResponse],
     summary="List issues for administrator review",
