@@ -13,22 +13,37 @@ class IssueService:
     """Service layer handling database operations for Issues and IssueUpdates."""
 
     def create(self, db: Session, issue_in: IssueCreate) -> Issue:
-        """Create and persist a new civic issue with an initial IssueUpdate history record."""
-        issue_data = issue_in.model_dump()
-        # Extract priority if enum
+        """
+        Create and persist a new civic issue with status=REPORTED and default priority=MEDIUM.
+        Creates an initial IssueUpdate record to track the issue's lifecycle from inception.
+        """
+        issue_data = issue_in.model_dump(exclude={"image"})
+
+        # Map image to image_path if provided
+        if issue_in.image and not issue_data.get("image_path"):
+            issue_data["image_path"] = issue_in.image
+
+        # Priority defaults to MEDIUM until AI analysis is implemented
         if "priority" in issue_data and issue_data["priority"] is not None:
             if hasattr(issue_data["priority"], "value"):
                 issue_data["priority"] = issue_data["priority"].value
+            elif not str(issue_data["priority"]).strip():
+                issue_data["priority"] = "MEDIUM"
+        else:
+            issue_data["priority"] = "MEDIUM"
+
+        # Explicitly set status to REPORTED per Prompt 3 requirements
+        issue_data["status"] = "REPORTED"
 
         db_issue = Issue(**issue_data)
         db.add(db_issue)
         db.commit()
         db.refresh(db_issue)
 
-        # Create initial audit history update
+        # Create initial audit history update record
         initial_update = IssueUpdate(
             issue_id=db_issue.id,
-            status=db_issue.status,
+            status="REPORTED",
             comment="Issue reported by resident.",
             updated_by=db_issue.created_by,
         )
@@ -39,7 +54,7 @@ class IssueService:
         return db_issue
 
     def get_by_id(self, db: Session, issue_id: int) -> Optional[Issue]:
-        """Fetch a single issue by ID with related creator, assignee, and updates."""
+        """Fetch a single issue by ID with related creator, assignee, and status history updates."""
         return db.query(Issue).filter(Issue.id == issue_id).first()
 
     def get_multi(
@@ -58,17 +73,17 @@ class IssueService:
         query = db.query(Issue)
 
         if status:
-            query = query.filter(Issue.status == status)
+            query = query.filter(func.upper(Issue.status) == status.strip().upper())
         if category:
-            query = query.filter(Issue.category == category)
+            query = query.filter(func.lower(Issue.category) == category.strip().lower())
         if priority:
-            query = query.filter(Issue.priority == priority)
+            query = query.filter(func.upper(Issue.priority) == priority.strip().upper())
         if created_by:
             query = query.filter(Issue.created_by == created_by)
         if assigned_to:
             query = query.filter(Issue.assigned_to == assigned_to)
         if search:
-            pattern = f"%{search}%"
+            pattern = f"%{search.strip()}%"
             query = query.filter(
                 (Issue.title.ilike(pattern))
                 | (Issue.description.ilike(pattern))
@@ -81,7 +96,10 @@ class IssueService:
 
     def update(self, db: Session, db_issue: Issue, issue_in: IssueUpdateSchema) -> Issue:
         """Update fields of an existing issue."""
-        update_data = issue_in.model_dump(exclude_unset=True)
+        update_data = issue_in.model_dump(exclude_unset=True, exclude={"image"})
+        if issue_in.image and not update_data.get("image_path"):
+            update_data["image_path"] = issue_in.image
+
         for field, value in update_data.items():
             if hasattr(db_issue, field):
                 if hasattr(value, "value"):
@@ -127,7 +145,6 @@ class IssueService:
             comment=update_in.comment,
             updated_by=update_in.updated_by,
         )
-        # Also sync issue status if specified
         if update_in.status and update_in.status != db_issue.status:
             db_issue.status = update_in.status
 

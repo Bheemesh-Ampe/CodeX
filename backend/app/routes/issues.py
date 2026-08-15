@@ -9,7 +9,6 @@ from app.schemas.issue import (
     IssueUpdateSchema,
     IssueStatusUpdate,
     IssueResponse,
-    IssueListResponse,
     IssueStatsResponse,
     IssueStatus,
     IssuePriority,
@@ -26,53 +25,61 @@ router = APIRouter(prefix="/issues", tags=["Issues"])
     response_model=IssueResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Report a civic issue",
-    description="Allows residents to submit a new civic issue with coordinates, title, description, category, and photo path.",
+    description="Allows residents to report a new civic issue with title, description, latitude, longitude, and optional address or image.",
 )
 def create_issue(
     issue_in: IssueCreate,
     db: Session = Depends(get_db),
 ) -> IssueResponse:
-    """Create a new issue."""
+    """
+    Create and persist a new civic issue.
+    - Validates request payload via Pydantic
+    - Saves issue to SQLite
+    - Sets initial status to REPORTED
+    - Sets default priority to MEDIUM
+    - Initializes status history audit log
+    - Returns HTTP 201 Created with the created issue
+    """
     return issue_service.create(db=db, issue_in=issue_in)
 
 
 @router.get(
     "",
-    response_model=IssueListResponse,
+    response_model=List[IssueResponse],
     summary="List civic issues",
-    description="Retrieve all reported issues with filters for status, category, priority, reporter, assignee, and search terms.",
+    description="Retrieve all reported civic issues. Supports optional filtering by status and category.",
 )
 def list_issues(
-    status_filter: Optional[IssueStatus] = Query(None, alias="status", description="Filter by issue status"),
-    category: Optional[str] = Query(None, description="Filter by category"),
-    priority: Optional[IssuePriority] = Query(None, description="Filter by priority"),
-    search: Optional[str] = Query(None, description="Search in title, description, or address"),
+    status: Optional[str] = Query(None, description="Filter by issue status (e.g. REPORTED, IN_REVIEW, IN_PROGRESS, RESOLVED, REJECTED)"),
+    category: Optional[str] = Query(None, description="Filter by category (e.g. Pothole, Streetlight, Water & Drainage)"),
+    priority: Optional[str] = Query(None, description="Filter by priority (e.g. LOW, MEDIUM, HIGH, CRITICAL)"),
+    search: Optional[str] = Query(None, description="Search term across title, description, and address"),
     created_by: Optional[int] = Query(None, description="Filter by resident user ID"),
     assigned_to: Optional[int] = Query(None, description="Filter by assigned staff/admin ID"),
     skip: int = Query(0, ge=0, description="Offset for pagination"),
     limit: int = Query(100, ge=1, le=500, description="Page limit"),
     db: Session = Depends(get_db),
-) -> IssueListResponse:
+) -> List[IssueResponse]:
     """List issues matching query criteria."""
-    items, total = issue_service.get_multi(
+    items, _ = issue_service.get_multi(
         db=db,
-        status=status_filter.value if status_filter else None,
+        status=status,
         category=category,
-        priority=priority.value if priority else None,
+        priority=priority,
         search=search,
         created_by=created_by,
         assigned_to=assigned_to,
         skip=skip,
         limit=limit,
     )
-    return IssueListResponse(total=total, items=items)
+    return items
 
 
 @router.get(
     "/stats/summary",
     response_model=IssueStatsResponse,
     summary="Get issue statistics",
-    description="Provides aggregated issue counts by status, category, and priority for admin dashboards.",
+    description="Provides aggregated issue counts by status, category, and priority for dashboard metrics.",
 )
 def get_stats_summary(
     db: Session = Depends(get_db),
@@ -103,13 +110,13 @@ def seed_issues(
     "/{issue_id}",
     response_model=IssueResponse,
     summary="Get issue details",
-    description="Retrieve full details, creator, assignee, and complete update history for a specific issue.",
+    description="Retrieve complete issue details including geographic coordinates and complete status history audit logs.",
 )
 def get_issue(
     issue_id: int,
     db: Session = Depends(get_db),
 ) -> IssueResponse:
-    """Fetch an issue by ID."""
+    """Fetch complete issue details and status history by ID."""
     issue = issue_service.get_by_id(db=db, issue_id=issue_id)
     if not issue:
         raise HTTPException(

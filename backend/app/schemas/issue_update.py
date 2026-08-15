@@ -2,16 +2,16 @@
 
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.schemas.user import UserResponse
 
 
 class IssueUpdateBase(BaseModel):
     """Base fields for an issue update."""
 
-    status: str = Field(..., example="IN_PROGRESS")
-    comment: Optional[str] = Field(None, example="Road maintenance crew dispatched to site.")
-    updated_by: Optional[int] = Field(None, example=1)
+    status: str = Field(..., json_schema_extra={"example": "IN_PROGRESS"})
+    comment: Optional[str] = Field(None, json_schema_extra={"example": "Road maintenance crew dispatched to site."})
+    updated_by: Optional[int] = Field(None, json_schema_extra={"example": 1})
 
 
 class IssueUpdateCreate(IssueUpdateBase):
@@ -30,5 +30,4 @@ class IssueUpdateResponse(BaseModel):
     created_at: datetime
     user: Optional[UserResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 import re
 
 
@@ -17,9 +17,9 @@ class UserRole(str, Enum):
 class UserBase(BaseModel):
     """Base user schema."""
 
-    name: str = Field(..., min_length=2, max_length=100, example="Jane Resident")
-    email: str = Field(..., example="resident@civicfix.org")
-    role: UserRole = Field(default=UserRole.RESIDENT, example=UserRole.RESIDENT)
+    name: str = Field(..., min_length=2, max_length=100, json_schema_extra={"example": "Jane Resident"})
+    email: str = Field(..., json_schema_extra={"example": "resident@civicfix.org"})
+    role: UserRole = Field(default=UserRole.RESIDENT, json_schema_extra={"example": UserRole.RESIDENT})
 
     @field_validator("email")
     @classmethod
@@ -41,5 +41,4 @@ class UserResponse(UserBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

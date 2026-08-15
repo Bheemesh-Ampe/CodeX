@@ -64,7 +64,7 @@ def test_legacy_list_and_stats():
     """Test legacy listing and summary endpoints."""
     list_res = client.get("/api/reports?limit=10")
     assert list_res.status_code == 200
-    assert "total" in list_res.json()
+    assert isinstance(list_res.json(), list)
 
     stats_res = client.get("/api/reports/stats/summary")
     assert stats_res.status_code == 200
