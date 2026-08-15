@@ -1,4 +1,4 @@
-"""Pydantic schemas for Civic Issues."""
+"""Pydantic schemas for Civic Issues and AI Analysis."""
 
 from datetime import datetime
 from enum import Enum
@@ -25,6 +25,18 @@ class IssuePriority(str, Enum):
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
+
+
+class AIAnalysisResult(BaseModel):
+    """Structured result returned by Groq AI service."""
+
+    category: str = Field(..., json_schema_extra={"example": "Road Damage"})
+    priority: str = Field(..., json_schema_extra={"example": "HIGH"})
+    summary: str = Field(..., json_schema_extra={"example": "Severe pothole damaging vehicles."})
+    suggested_action: str = Field(..., json_schema_extra={"example": "Dispatch road maintenance team for emergency asphalt patching."})
+    ai_status: str = Field(default="success", json_schema_extra={"example": "success"})  # "success" or "fallback"
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IssueBase(BaseModel):
@@ -118,6 +130,7 @@ class IssueUpdateSchema(BaseModel):
     ai_category: Optional[str] = None
     ai_priority: Optional[str] = None
     ai_suggested_action: Optional[str] = None
+    ai_status: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
@@ -138,7 +151,7 @@ class IssueStatusUpdate(BaseModel):
 
 
 class IssueResponse(IssueBase):
-    """Serialized representation of an Issue with coordinates, status, and audit history."""
+    """Serialized representation of an Issue with coordinates, status, AI metadata, and audit history."""
 
     id: int
     status: str
@@ -149,6 +162,7 @@ class IssueResponse(IssueBase):
     ai_category: Optional[str] = None
     ai_priority: Optional[str] = None
     ai_suggested_action: Optional[str] = None
+    ai_status: Optional[str] = "fallback"
     created_by: Optional[int] = None
     assigned_to: Optional[int] = None
     created_at: datetime

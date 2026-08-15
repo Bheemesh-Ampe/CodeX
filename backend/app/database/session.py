@@ -32,7 +32,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables for all models."""
+    """Initialize database tables and ensure all model columns exist in SQLite."""
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     # Import all models to ensure they are registered on Base.metadata
     from app.models.user import User  # noqa: F401
@@ -40,3 +40,13 @@ def init_db() -> None:
     from app.models.issue_update import IssueUpdate  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
+
+    # Lightweight SQLite schema synchronization for newly added columns
+    try:
+        with engine.begin() as conn:
+            result = conn.exec_driver_sql("PRAGMA table_info(issues)")
+            columns = [row[1] for row in result.fetchall()]
+            if columns and "ai_status" not in columns:
+                conn.exec_driver_sql("ALTER TABLE issues ADD COLUMN ai_status VARCHAR(50) DEFAULT 'fallback'")
+    except Exception:
+        pass

@@ -28,11 +28,12 @@ class Issue(Base):
     # Photograph / media file path
     image_path = Column(String(500), nullable=True)
 
-    # Generative AI analysis fields (for future Groq integration)
+    # Generative AI analysis fields (Groq integration)
     ai_summary = Column(Text, nullable=True)
     ai_category = Column(String(100), nullable=True)
     ai_priority = Column(String(50), nullable=True)
     ai_suggested_action = Column(Text, nullable=True)
+    ai_status = Column(String(50), default="fallback", nullable=True)
 
     # User relationships
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)

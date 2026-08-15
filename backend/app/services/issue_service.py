@@ -1,12 +1,13 @@
-"""Service layer for Issue operations."""
+"""Service layer for Issue operations with Groq AI integration."""
 
 from typing import List, Optional, Tuple, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from app.models.issue import Issue
 from app.models.issue_update import IssueUpdate
-from app.schemas.issue import IssueCreate, IssueUpdateSchema, IssueStatusUpdate
+from app.schemas.issue import IssueCreate, IssueUpdateSchema, IssueStatusUpdate, IssuePriority
 from app.schemas.issue_update import IssueUpdateCreate
+from app.services.ai_service import ai_service
 
 
 class IssueService:
@@ -14,8 +15,12 @@ class IssueService:
 
     def create(self, db: Session, issue_in: IssueCreate) -> Issue:
         """
-        Create and persist a new civic issue with status=REPORTED and default priority=MEDIUM.
-        Creates an initial IssueUpdate record to track the issue's lifecycle from inception.
+        Create and persist a new civic issue with Groq AI enrichment.
+        1. Saves initial issue with status=REPORTED.
+        2. Sends description to AI service for categorization, summary, priority, action.
+        3. Stores AI category, priority, summary, suggested action, and ai_status.
+        4. Initializes status history audit record.
+        5. Returns the AI-enhanced issue.
         """
         issue_data = issue_in.model_dump(exclude={"image"})
 
@@ -23,28 +28,44 @@ class IssueService:
         if issue_in.image and not issue_data.get("image_path"):
             issue_data["image_path"] = issue_in.image
 
-        # Priority defaults to MEDIUM until AI analysis is implemented
-        if "priority" in issue_data and issue_data["priority"] is not None:
-            if hasattr(issue_data["priority"], "value"):
-                issue_data["priority"] = issue_data["priority"].value
-            elif not str(issue_data["priority"]).strip():
-                issue_data["priority"] = "MEDIUM"
-        else:
-            issue_data["priority"] = "MEDIUM"
-
-        # Explicitly set status to REPORTED per Prompt 3 requirements
+        # Explicitly set initial status
         issue_data["status"] = "REPORTED"
 
+        # 1. Save issue to SQLite
         db_issue = Issue(**issue_data)
         db.add(db_issue)
         db.commit()
         db.refresh(db_issue)
 
-        # Create initial audit history update record
+        # 2. Invoke Groq AI analysis
+        try:
+            ai_result = ai_service.analyze_issue(
+                title=db_issue.title,
+                description=db_issue.description,
+            )
+        except Exception:
+            ai_result = ai_service.get_fallback(db_issue.description)
+
+        # 3. Store AI metadata
+        db_issue.ai_category = ai_result.category
+        db_issue.ai_priority = ai_result.priority
+        db_issue.ai_summary = ai_result.summary
+        db_issue.ai_suggested_action = ai_result.suggested_action
+        db_issue.ai_status = ai_result.ai_status
+
+        # If user left category as default "Other", enrich with AI category
+        if db_issue.category in ("Other", None) and ai_result.category != "Other":
+            db_issue.category = ai_result.category
+
+        # If priority was default, update priority with AI priority when AI succeeded
+        if (not issue_in.priority or issue_in.priority == IssuePriority.MEDIUM) and ai_result.ai_status == "success":
+            db_issue.priority = ai_result.priority
+
+        # 4. Create initial audit history update record
         initial_update = IssueUpdate(
             issue_id=db_issue.id,
             status="REPORTED",
-            comment="Issue reported by resident.",
+            comment=f"Issue reported by resident. AI Triage: {ai_result.category} ({ai_result.priority} priority).",
             updated_by=db_issue.created_by,
         )
         db.add(initial_update)
