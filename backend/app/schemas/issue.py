@@ -1,4 +1,4 @@
-"""Pydantic schemas for Civic Issues and AI Analysis."""
+"""Pydantic schemas for Civic Issues, AI Analysis, and Admin Workflows."""
 
 from datetime import datetime
 from enum import Enum
@@ -9,9 +9,10 @@ from app.schemas.issue_update import IssueUpdateResponse
 
 
 class IssueStatus(str, Enum):
-    """Supported statuses for an issue."""
+    """Supported statuses for an issue (Prompt 6)."""
 
     REPORTED = "REPORTED"
+    ACKNOWLEDGED = "ACKNOWLEDGED"
     IN_REVIEW = "IN_REVIEW"
     IN_PROGRESS = "IN_PROGRESS"
     RESOLVED = "RESOLVED"
@@ -142,12 +143,12 @@ class IssueUpdateSchema(BaseModel):
 
 
 class IssueStatusUpdate(BaseModel):
-    """Schema for status changes and adding progress comments."""
+    """Schema for administrator status transitions (Prompt 6)."""
 
-    status: IssueStatus = Field(..., json_schema_extra={"example": IssueStatus.IN_PROGRESS})
+    status: IssueStatus = Field(..., json_schema_extra={"example": IssueStatus.ACKNOWLEDGED})
     priority: Optional[IssuePriority] = Field(None, json_schema_extra={"example": IssuePriority.HIGH})
-    comment: Optional[str] = Field(None, json_schema_extra={"example": "Road maintenance crew dispatched to site."})
-    updated_by: Optional[int] = Field(None, json_schema_extra={"example": 1}, description="Admin/User ID making the update")
+    comment: Optional[str] = Field(None, json_schema_extra={"example": "Issue acknowledged by city administration."})
+    updated_by: Optional[int] = Field(default=1, json_schema_extra={"example": 1}, description="Admin/User ID making the update")
 
 
 class IssueResponse(IssueBase):
