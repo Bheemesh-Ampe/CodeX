@@ -1,7 +1,8 @@
-"""API routes for Civic Issues."""
+"""API routes for Civic Issues with Safe Image Upload."""
 
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.schemas.issue import (
@@ -16,6 +17,7 @@ from app.schemas.issue import (
 from app.schemas.issue_update import IssueUpdateCreate, IssueUpdateResponse
 from app.services.issue_service import issue_service
 from app.utils.seed_data import seed_demo_data
+from app.utils.image_handler import save_upload_image, get_safe_image_path
 
 router = APIRouter(prefix="/issues", tags=["Issues"])
 
@@ -24,15 +26,15 @@ router = APIRouter(prefix="/issues", tags=["Issues"])
     "",
     response_model=IssueResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Report a civic issue",
-    description="Allows residents to report a new civic issue with title, description, latitude, longitude, and optional address or image.",
+    summary="Report a civic issue (JSON)",
+    description="Allows residents to report a new civic issue with title, description, latitude, longitude, and optional address or image path.",
 )
 def create_issue(
     issue_in: IssueCreate,
     db: Session = Depends(get_db),
 ) -> IssueResponse:
     """
-    Create and persist a new civic issue.
+    Create and persist a new civic issue from JSON payload.
     - Validates request payload via Pydantic
     - Saves issue to SQLite
     - Sets initial status to REPORTED
@@ -41,6 +43,86 @@ def create_issue(
     - Returns HTTP 201 Created with the created issue
     """
     return issue_service.create(db=db, issue_in=issue_in)
+
+
+@router.post(
+    "/with-image",
+    response_model=IssueResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Report a civic issue with direct image file upload (Multipart Form)",
+    description="Allows residents to submit an issue report and upload a photo simultaneously.",
+)
+async def create_issue_with_image(
+    title: str = Form(..., description="Short title describing the issue"),
+    description: str = Form(..., description="Detailed description of the issue"),
+    latitude: float = Form(..., description="Geographic latitude coordinate"),
+    longitude: float = Form(..., description="Geographic longitude coordinate"),
+    category: Optional[str] = Form("Other", description="Issue category"),
+    address: Optional[str] = Form(None, description="Human-readable address or landmark"),
+    priority: Optional[IssuePriority] = Form(IssuePriority.MEDIUM, description="Initial priority level"),
+    image: Optional[UploadFile] = File(None, description="Optional photo attachment (JPG, PNG, WEBP, GIF, BMP)"),
+    db: Session = Depends(get_db),
+) -> IssueResponse:
+    """
+    Create an issue accepting multipart/form-data along with direct file upload.
+    Validates image format, prevents path traversal, stores to backend/uploads/,
+    and saves the resulting image path in the Issue record.
+    """
+    # 1. Handle and safely save image if provided
+    image_path = None
+    if image is not None and image.filename:
+        image_path = await save_upload_image(image)
+
+    # 2. Validate input fields using Pydantic schema
+    try:
+        issue_in = IssueCreate(
+            title=title,
+            description=description,
+            latitude=latitude,
+            longitude=longitude,
+            category=category or "Other",
+            address=address,
+            priority=priority,
+            image_path=image_path,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+
+    # 3. Save to database
+    return issue_service.create(db=db, issue_in=issue_in)
+
+
+@router.post(
+    "/upload",
+    status_code=status.HTTP_201_CREATED,
+    summary="Upload issue image",
+    description="Uploads a civic issue image, validates format/size, generates a unique filename, and stores in backend/uploads/.",
+)
+async def upload_issue_image(
+    image: UploadFile = File(..., description="Image file to upload (JPG, PNG, WEBP, GIF, BMP, max 5MB)"),
+):
+    """
+    Endpoint for uploading an image file independently.
+    Returns the generated unique relative URL and filename.
+    """
+    if not image or not image.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No image file provided in request.",
+        )
+
+    image_path = await save_upload_image(image)
+    filename = image_path.split("/")[-1] if image_path else ""
+
+    return {
+        "filename": filename,
+        "image_path": image_path,
+        "image_url": image_path,
+        "message": "Image uploaded successfully",
+    }
 
 
 @router.get(
@@ -110,7 +192,7 @@ def seed_issues(
     "/{issue_id}",
     response_model=IssueResponse,
     summary="Get issue details",
-    description="Retrieve complete issue details including geographic coordinates and complete status history audit logs.",
+    description="Retrieve complete issue details including geographic coordinates, photo path, and complete status history audit logs.",
 )
 def get_issue(
     issue_id: int,
@@ -124,6 +206,55 @@ def get_issue(
             detail=f"Issue with ID {issue_id} not found",
         )
     return issue
+
+
+@router.get(
+    "/{issue_id}/image",
+    summary="Retrieve issue image safely",
+    description="Safely streams the image file associated with a specific civic issue without exposing arbitrary filesystem paths.",
+)
+def get_issue_image(
+    issue_id: int,
+    db: Session = Depends(get_db),
+):
+    """Safely stream the attached image for an issue."""
+    issue = issue_service.get_by_id(db=db, issue_id=issue_id)
+    if not issue:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Issue with ID {issue_id} not found",
+        )
+
+    if not issue.image_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Issue with ID {issue_id} does not have an attached image",
+        )
+
+    safe_path = get_safe_image_path(issue.image_path)
+    if not safe_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Image file not found on server",
+        )
+
+    return FileResponse(path=safe_path)
+
+
+@router.get(
+    "/images/{filename}",
+    summary="Retrieve stored image by filename",
+    description="Safely returns a stored demo upload by unique filename.",
+)
+def get_image_by_filename(filename: str):
+    """Safely return a file by its unique name from uploads directory."""
+    safe_path = get_safe_image_path(filename)
+    if not safe_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Image '{filename}' not found",
+        )
+    return FileResponse(path=safe_path)
 
 
 @router.patch(

@@ -2,6 +2,7 @@
 
 from typing import List, Union
 import json
+import os
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,6 +22,15 @@ class Settings(BaseSettings):
 
     # File uploads
     UPLOAD_DIR: str = "./uploads"
+    MAX_IMAGE_SIZE_MB: int = 5
+    ALLOWED_IMAGE_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"]
+    ALLOWED_IMAGE_MIME_TYPES: List[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+    ]
 
     # AI Configuration (Groq placeholder for future expansion)
     GROQ_API_KEY: str = ""

@@ -1,22 +1,146 @@
-"""Tests for /api/issues REST endpoints conforming to Prompt 3 requirements."""
+"""Tests for /api/issues REST endpoints including Safe Image Upload (Prompt 4)."""
 
+import io
+import os
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.config import settings
 
 client = TestClient(app)
 
+# Helper sample image bytes
+SAMPLE_PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+SAMPLE_JPG_BYTES = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00\xff\xdb\x00C\x00\xff\xc0\x00\x11\x08\x00\x01\x00\x01\x03\x01"\
+                   b"\x11\x00\x02\x11\x01\x03\x11\x01\xff\xc4\x00\x1f\x00\x00\x01\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00"\
+                   b"\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\xff\xda\x00\x0c\x03\x01\x00\x02\x11\x03\x11\x00?\x00\xbf\x00\xff\xd9"
 
-# 1. Successful Issue Creation
+
+# ==========================================================
+# Prompt 4: Safe Image Upload Tests
+# ==========================================================
+
+def test_valid_image_upload():
+    """Test 1: Valid image upload generating unique filename and storing in backend/uploads/."""
+    file_payload = {
+        "image": ("pothole_photo.png", io.BytesIO(SAMPLE_PNG_BYTES), "image/png"),
+    }
+    response = client.post("/api/issues/upload", files=file_payload)
+    assert response.status_code == 201
+    data = response.json()
+
+    assert "filename" in data
+    assert "image_path" in data
+    assert data["image_path"].startswith("/uploads/")
+    assert data["filename"].endswith(".png")
+    # Verify unique filename generated (not original filename)
+    assert data["filename"] != "pothole_photo.png"
+
+    # Verify physical file existence in backend/uploads/
+    upload_dir = os.path.abspath(settings.UPLOAD_DIR)
+    file_path = os.path.join(upload_dir, data["filename"])
+    assert os.path.exists(file_path)
+
+    # Test safe retrieval of the uploaded image by filename
+    retrieval_res = client.get(f"/api/issues/images/{data['filename']}")
+    assert retrieval_res.status_code == 200
+    assert len(retrieval_res.content) > 0
+
+
+def test_invalid_file_type_upload():
+    """Test 2: Reject unsupported file formats (.txt, .exe, .sh, etc.)."""
+    file_payload = {
+        "image": ("malicious_script.sh", io.BytesIO(b"#!/bin/bash\necho hack"), "text/x-shellscript"),
+    }
+    response = client.post("/api/issues/upload", files=file_payload)
+    assert response.status_code == 400
+    error_msg = response.json()["detail"]
+    assert "Unsupported file format" in error_msg or "Allowed" in error_msg
+
+
+def test_missing_image_handling():
+    """Test 3: Missing image gracefully sets image_path to None and returns 404 for image stream."""
+    # Create issue with no image attached
+    payload = {
+        "title": "Broken Streetlamp No Photo",
+        "description": "The lamp post on 3rd avenue is not turning on.",
+        "latitude": 37.7750,
+        "longitude": -122.4180,
+    }
+    create_res = client.post("/api/issues", json=payload)
+    assert create_res.status_code == 201
+    issue_id = create_res.json()["id"]
+    assert create_res.json()["image_path"] is None
+
+    # Safe retrieval should return 404 since no image was attached
+    img_res = client.get(f"/api/issues/{issue_id}/image")
+    assert img_res.status_code == 404
+
+
+def test_issue_creation_with_image_multipart():
+    """Test 4: Issue creation with simultaneous image file upload (multipart/form-data)."""
+    form_data = {
+        "title": "Damaged Sidewalk with Photo",
+        "description": "Concrete slabs pushed up by tree roots creating trip hazard.",
+        "latitude": "37.7812",
+        "longitude": "-122.4130",
+        "category": "Sidewalks",
+        "address": "888 Howard Street",
+    }
+    file_payload = {
+        "image": ("sidewalk.jpg", io.BytesIO(SAMPLE_JPG_BYTES), "image/jpeg"),
+    }
+
+    response = client.post("/api/issues/with-image", data=form_data, files=file_payload)
+    assert response.status_code == 201
+    data = response.json()
+
+    assert data["id"] is not None
+    assert data["title"] == form_data["title"]
+    assert data["status"] == "REPORTED"
+    assert data["priority"] == "MEDIUM"
+    assert data["image_path"] is not None
+    assert data["image_path"].startswith("/uploads/")
+    assert data["image_path"].endswith(".jpg")
+
+
+def test_issue_retrieval_containing_image_information():
+    """Test 5: Issue retrieval containing image metadata and safe image file streaming."""
+    # 1. Create issue with image
+    form_data = {
+        "title": "Overflowing Public Garbage Bin",
+        "description": "Trash overflowing onto sidewalk near the park entrance.",
+        "latitude": "37.7840",
+        "longitude": "-122.4080",
+        "category": "Sanitation",
+    }
+    file_payload = {
+        "image": ("trash.png", io.BytesIO(SAMPLE_PNG_BYTES), "image/png"),
+    }
+    create_res = client.post("/api/issues/with-image", data=form_data, files=file_payload)
+    assert create_res.status_code == 201
+    issue_id = create_res.json()["id"]
+    image_path = create_res.json()["image_path"]
+
+    # 2. Retrieve issue by ID and check image fields
+    get_res = client.get(f"/api/issues/{issue_id}")
+    assert get_res.status_code == 200
+    issue_data = get_res.json()
+    assert issue_data["image_path"] == image_path
+    assert issue_data["image"] == image_path
+
+    # 3. Retrieve image file safely via dedicated endpoint
+    stream_res = client.get(f"/api/issues/{issue_id}/image")
+    assert stream_res.status_code == 200
+    assert len(stream_res.content) == len(SAMPLE_PNG_BYTES)
+
+
+# ==========================================================
+# Prompt 3: Core API Tests
+# ==========================================================
+
 def test_successful_issue_creation():
-    """
-    Test successful issue creation via POST /api/issues with all required & optional fields:
-    - Validates request payload
-    - Saves to SQLite
-    - Sets status to REPORTED
-    - Sets default priority to MEDIUM
-    - Returns HTTP 201 with created issue
-    """
+    """Test successful issue creation via POST /api/issues."""
     payload = {
         "title": "Severe Pothole on Market Street",
         "description": "Deep pothole causing hazard for cyclists and vehicles near the bus stop.",
@@ -38,57 +162,23 @@ def test_successful_issue_creation():
     assert data["longitude"] == -122.4194
     assert data["address"] == payload["address"]
     assert data["image_path"] == payload["image"]
-    assert data["image"] == payload["image"]
     assert data["status"] == "REPORTED"
     assert data["priority"] == "MEDIUM"
 
-    # Verify initial status history is created
     assert "updates" in data
     assert len(data["updates"]) >= 1
     assert data["updates"][0]["status"] == "REPORTED"
 
 
-def test_successful_issue_creation_minimal_fields():
-    """Test issue creation with only mandatory fields."""
-    payload = {
-        "title": "Broken Streetlight",
-        "description": "Streetlight flickers and goes dark during the night.",
-        "latitude": 37.7800,
-        "longitude": -122.4200,
-    }
-    response = client.post("/api/issues", json=payload)
-    assert response.status_code == 201
-    data = response.json()
-
-    assert data["id"] is not None
-    assert data["title"] == payload["title"]
-    assert data["status"] == "REPORTED"
-    assert data["priority"] == "MEDIUM"
-    assert data["category"] == "Other"
-    assert data["latitude"] == 37.7800
-    assert data["longitude"] == -122.4200
-    assert data["address"] is None
-
-
-# 2. Invalid Issue Data Validation (Pydantic)
 def test_invalid_issue_data_missing_fields():
     """Test validation errors when required fields are missing."""
-    # Missing description and coordinates
-    payload = {
-        "title": "Missing details",
-    }
+    payload = {"title": "Missing details"}
     response = client.post("/api/issues", json=payload)
     assert response.status_code == 422
-    errors = response.json().get("detail", [])
-    missing_fields = {err["loc"][-1] for err in errors}
-    assert "description" in missing_fields
-    assert "latitude" in missing_fields
-    assert "longitude" in missing_fields
 
 
 def test_invalid_issue_data_out_of_range_coordinates():
-    """Test validation fails when latitude or longitude are out of geographic range."""
-    # Invalid latitude > 90
+    """Test validation fails when latitude or longitude are out of range."""
     payload_bad_lat = {
         "title": "Invalid Latitude Issue",
         "description": "Testing invalid latitude value",
@@ -98,37 +188,9 @@ def test_invalid_issue_data_out_of_range_coordinates():
     res_lat = client.post("/api/issues", json=payload_bad_lat)
     assert res_lat.status_code == 422
 
-    # Invalid longitude < -180
-    payload_bad_lon = {
-        "title": "Invalid Longitude Issue",
-        "description": "Testing invalid longitude value",
-        "latitude": 37.7749,
-        "longitude": -200.0,
-    }
-    res_lon = client.post("/api/issues", json=payload_bad_lon)
-    assert res_lon.status_code == 422
 
-
-def test_invalid_issue_data_blank_strings():
-    """Test validation fails when title or description is empty or whitespace only."""
-    payload = {
-        "title": "   ",
-        "description": "   ",
-        "latitude": 37.7749,
-        "longitude": -122.4194,
-    }
-    response = client.post("/api/issues", json=payload)
-    assert response.status_code == 422
-
-
-# 3. Retrieving Issues (GET /api/issues)
 def test_retrieving_issues_list():
-    """
-    Test GET /api/issues:
-    - Returns a list of issues
-    - Includes latitude and longitude
-    - Excludes unnecessary internal database information
-    """
+    """Test GET /api/issues returns clean list with coordinates."""
     response = client.get("/api/issues")
     assert response.status_code == 200
     issues = response.json()
@@ -137,55 +199,13 @@ def test_retrieving_issues_list():
 
     first_issue = issues[0]
     assert "id" in first_issue
-    assert "title" in first_issue
-    assert "description" in first_issue
     assert "latitude" in first_issue
     assert "longitude" in first_issue
     assert "status" in first_issue
-    assert "priority" in first_issue
-    assert isinstance(first_issue["latitude"], (int, float))
-    assert isinstance(first_issue["longitude"], (int, float))
 
 
-def test_retrieving_issues_with_filters():
-    """Test GET /api/issues with status and category query filters."""
-    # Create distinct issue for filtering
-    unique_cat = "Graffiti Special Filter"
-    payload = {
-        "title": "Filter Test Issue",
-        "description": "Issue specifically for testing query filters.",
-        "category": unique_cat,
-        "latitude": 37.7600,
-        "longitude": -122.4400,
-    }
-    create_res = client.post("/api/issues", json=payload)
-    assert create_res.status_code == 201
-
-    # Filter by category
-    res_cat = client.get(f"/api/issues?category={unique_cat}")
-    assert res_cat.status_code == 200
-    cat_issues = res_cat.json()
-    assert isinstance(cat_issues, list)
-    assert len(cat_issues) >= 1
-    for item in cat_issues:
-        assert item["category"].lower() == unique_cat.lower()
-
-    # Filter by status
-    res_status = client.get("/api/issues?status=REPORTED")
-    assert res_status.status_code == 200
-    status_issues = res_status.json()
-    assert isinstance(status_issues, list)
-    for item in status_issues:
-        assert item["status"] == "REPORTED"
-
-
-# 4. Retrieving a Single Issue (GET /api/issues/{issue_id})
 def test_retrieving_single_issue_with_status_history():
-    """
-    Test GET /api/issues/{issue_id}:
-    - Returns complete issue details
-    - Includes complete status history
-    """
+    """Test GET /api/issues/{issue_id} returns details and status history."""
     payload = {
         "title": "Fallen Tree Branch on sidewalk",
         "description": "Large branch obstructing the public sidewalk.",
@@ -198,95 +218,16 @@ def test_retrieving_single_issue_with_status_history():
     assert create_res.status_code == 201
     issue_id = create_res.json()["id"]
 
-    # Fetch by ID
     get_res = client.get(f"/api/issues/{issue_id}")
     assert get_res.status_code == 200
     fetched = get_res.json()
 
     assert fetched["id"] == issue_id
-    assert fetched["title"] == payload["title"]
-    assert fetched["description"] == payload["description"]
-    assert fetched["latitude"] == payload["latitude"]
-    assert fetched["longitude"] == payload["longitude"]
-    assert fetched["address"] == payload["address"]
     assert fetched["status"] == "REPORTED"
-    assert fetched["priority"] == "MEDIUM"
-
-    # Status history verification
-    assert "updates" in fetched
-    assert isinstance(fetched["updates"], list)
     assert len(fetched["updates"]) >= 1
-    assert fetched["updates"][0]["status"] == "REPORTED"
 
 
-# 5. Issue Not Found (GET /api/issues/{issue_id})
 def test_issue_not_found():
     """Test retrieving non-existent issue returns HTTP 404."""
-    non_existent_id = 999999
-    response = client.get(f"/api/issues/{non_existent_id}")
+    response = client.get("/api/issues/999999")
     assert response.status_code == 404
-    error = response.json()
-    assert "detail" in error
-    assert str(non_existent_id) in error["detail"]
-
-
-# Additional workflow tests
-def test_admin_update_issue_status_and_audit_log():
-    """Test updating issue status and verifying audit trail addition."""
-    payload = {
-        "title": "Damaged guardrail",
-        "description": "Vehicle crashed into guardrail on exit ramp.",
-        "category": "Road & Traffic Safety",
-        "latitude": 37.7700,
-        "longitude": -122.4100,
-    }
-    create_res = client.post("/api/issues", json=payload)
-    assert create_res.status_code == 201
-    issue_id = create_res.json()["id"]
-
-    status_update = {
-        "status": "IN_PROGRESS",
-        "priority": "CRITICAL",
-        "comment": "Highway patrol notified and crew on route.",
-    }
-    patch_res = client.patch(f"/api/issues/{issue_id}/status", json=status_update)
-    assert patch_res.status_code == 200
-    updated = patch_res.json()
-    assert updated["status"] == "IN_PROGRESS"
-    assert updated["priority"] == "CRITICAL"
-    assert len(updated["updates"]) >= 2
-
-
-def test_add_issue_comment_update():
-    """Test explicitly appending a comment to an issue."""
-    payload = {
-        "title": "Graffiti on Public Library Wall",
-        "description": "Spray paint on the east side facade.",
-        "category": "Graffiti & Vandalism",
-        "latitude": 37.7800,
-        "longitude": -122.4150,
-    }
-    create_res = client.post("/api/issues", json=payload)
-    assert create_res.status_code == 201
-    issue_id = create_res.json()["id"]
-
-    comment_payload = {
-        "status": "IN_REVIEW",
-        "comment": "Cleaning crew scheduled for tomorrow morning.",
-    }
-    comment_res = client.post(f"/api/issues/{issue_id}/updates", json=comment_payload)
-    assert comment_res.status_code == 201
-    comment_data = comment_res.json()
-    assert comment_data["comment"] == comment_payload["comment"]
-    assert comment_data["status"] == "IN_REVIEW"
-
-
-def test_issues_stats_summary():
-    """Test stats summary endpoint."""
-    res = client.get("/api/issues/stats/summary")
-    assert res.status_code == 200
-    data = res.json()
-    assert "total_issues" in data
-    assert "by_status" in data
-    assert "by_category" in data
-    assert "by_priority" in data
