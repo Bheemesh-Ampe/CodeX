@@ -3,8 +3,12 @@
 from typing import List, Union
 import json
 import os
+from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Base backend directory: anchors paths directly to backend/ folder
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -14,14 +18,14 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     DEBUG: bool = True
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./civicfix.db"
+    # Database: strictly located at backend/civicfix.db
+    DATABASE_URL: str = f"sqlite:///{BASE_DIR / 'civicfix.db'}"
 
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["*"]
 
-    # File uploads
-    UPLOAD_DIR: str = "./uploads"
+    # File uploads: strictly anchored to backend/uploads/
+    UPLOAD_DIR: str = str(BASE_DIR / "uploads")
     MAX_IMAGE_SIZE_MB: int = 5
     ALLOWED_IMAGE_EXTENSIONS: List[str] = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"]
     ALLOWED_IMAGE_MIME_TYPES: List[str] = [
@@ -50,7 +54,7 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
