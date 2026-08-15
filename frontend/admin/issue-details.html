@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" class="admin-theme">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX Admin — Issue Action & Details</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet.js CSS (OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-theme">
+
+  <!-- Admin Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="dashboard.html" class="brand-logo">
+        <span class="brand-icon">🛡️</span>
+        <span class="brand-name">CIVIC<span>FIX</span> <span class="brand-badge">ADMIN</span></span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <ul class="nav-menu">
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="issues.html" class="nav-link active">Issues</a></li>
+        <li><a href="map.html" class="nav-link">Map</a></li>
+        <li>
+          <a href="../index.html" class="nav-portal-switch switch-to-resident">
+            👤 Resident View
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container section">
+    
+    <!-- Top Bar -->
+    <div class="page-header flex-between" style="flex-wrap: wrap; gap: var(--space-4);">
+      <div>
+        <a href="issues.html" class="button secondary-button button-sm" style="margin-bottom: var(--space-2);">
+          ← Back to Issues Registry
+        </a>
+        <h1 id="admin-issue-title" class="page-title">⚙️ Issue Action Panel</h1>
+        <p id="admin-issue-subtitle" class="page-subtitle">Loading issue record from municipal database...</p>
+      </div>
+      <div style="display: flex; gap: var(--space-2); align-items: center;">
+        <span id="admin-status-badge" class="status-badge status-reported">Loading</span>
+        <span id="admin-priority-badge" class="priority-badge priority-medium">Priority</span>
+      </div>
+    </div>
+
+    <!-- Alert Banner for Admin Action Success -->
+    <div id="admin-action-alert" class="alert alert-success" style="display: none; margin-bottom: var(--space-4);">
+      <span>✅</span>
+      <span id="admin-action-msg">Issue updated successfully.</span>
+    </div>
+
+    <!-- Details and Action Grid -->
+    <div class="grid grid-cols-2">
+      
+      <!-- Left Column: ADMIN ACTION FORM & Description -->
+      <div>
+        
+        <!-- 1. ADMIN ACTION SECTION -->
+        <div class="card" style="margin-bottom: var(--space-6); border: 2px solid var(--color-primary-light);">
+          <div class="card-header flex-between" style="background: var(--color-primary-subtle);">
+            <h2 class="card-title" style="color: var(--color-primary-dark);">⚡ ADMIN ACTION</h2>
+            <span class="status-badge status-in-progress">Officer Dispatch</span>
+          </div>
+          <div class="card-body">
+            <form id="admin-action-form">
+              
+              <!-- Status Select -->
+              <div class="form-group">
+                <label for="admin-action-status" class="form-label">
+                  Transition Status <span class="required">*</span>
+                </label>
+                <select id="admin-action-status" class="select" required>
+                  <option value="REPORTED">REPORTED</option>
+                  <option value="IN_REVIEW">UNDER REVIEW</option>
+                  <option value="ASSIGNED">ASSIGNED</option>
+                  <option value="IN_PROGRESS">IN PROGRESS</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </div>
+
+              <!-- Comment Textarea -->
+              <div class="form-group">
+                <label for="admin-action-comment" class="form-label">
+                  Administrative Comment / Action Note
+                </label>
+                <textarea 
+                  id="admin-action-comment" 
+                  class="textarea" 
+                  placeholder="e.g. Road maintenance crew dispatched with cold asphalt mix. Work expected to complete by 4:00 PM."
+                  rows="3"
+                ></textarea>
+                <p class="form-hint">Appends an official IssueUpdate to the public timeline.</p>
+              </div>
+
+              <div style="display: flex; gap: var(--space-3); margin-top: var(--space-4);">
+                <button type="submit" id="btn-update-issue" class="button primary-button button-lg">
+                  UPDATE ISSUE
+                </button>
+                <a href="issues.html" class="button secondary-button button-lg">
+                  Back to List
+                </a>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+        <!-- 2. Issue Information & Description -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+          <div class="card-header flex-between">
+            <h2 class="card-title">Issue Description & Metadata</h2>
+            <span id="admin-category-badge" class="priority-badge priority-low">Category: --</span>
+          </div>
+          <div class="card-body">
+            <p id="admin-issue-desc" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-body); line-height: 1.6;">
+              --
+            </p>
+
+            <div style="background: var(--color-bg); padding: var(--space-3); border-radius: var(--radius-md); font-size: var(--font-size-xs); display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2);">
+              <div><strong>Issue ID:</strong> <span id="meta-admin-id">--</span></div>
+              <div><strong>Category:</strong> <span id="meta-admin-cat">--</span></div>
+              <div><strong>Created By:</strong> <span id="meta-admin-creator">Resident #1</span></div>
+              <div><strong>Assigned To:</strong> <span id="meta-admin-assigned">Admin Officer Rajesh</span></div>
+              <div><strong>Created At:</strong> <span id="meta-admin-created">--</span></div>
+              <div><strong>Updated At:</strong> <span id="meta-admin-updated">--</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Resolution Timeline (Audit Updates) -->
+        <div class="card">
+          <div class="card-header flex-between">
+            <h2 class="card-title">Audit Trail & Updates</h2>
+            <span id="admin-timeline-count" class="status-badge status-in-progress">Updates</span>
+          </div>
+          <div class="card-body">
+            <div id="admin-timeline-container" style="border-left: 2px solid var(--color-primary-light); padding-left: var(--space-4); margin-left: var(--space-2);">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: AI Analysis, Photo Evidence, and Location Map -->
+      <div>
+        
+        <!-- AI Analysis Card -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+          <div class="card-header flex-between" style="background: #f0fdf4;">
+            <h2 class="card-title" style="color: #166534; display: flex; align-items: center; gap: var(--space-2);">
+              <span>🤖</span> AI Generated Analysis
+            </h2>
+            <span class="status-badge status-resolved">Groq AI</span>
+          </div>
+          <div class="card-body">
+            <p id="admin-ai-summary" style="font-size: var(--font-size-sm); font-weight: 600; color: #166534; margin-bottom: var(--space-3);">
+              --
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); font-size: var(--font-size-xs);">
+              <div style="background: rgba(240, 253, 244, 0.7); padding: var(--space-2); border-radius: var(--radius-sm); border: 1px solid #bbf7d0;">
+                <strong style="color: var(--color-text-muted); display: block; text-transform: uppercase;">AI Category</strong>
+                <span id="admin-ai-category">--</span>
+              </div>
+              <div style="background: rgba(240, 253, 244, 0.7); padding: var(--space-2); border-radius: var(--radius-sm); border: 1px solid #bbf7d0;">
+                <strong style="color: var(--color-text-muted); display: block; text-transform: uppercase;">AI Priority</strong>
+                <span id="admin-ai-priority">--</span>
+              </div>
+            </div>
+            <p style="font-size: var(--font-size-xs); color: #15803d; margin: 0;">
+              <strong>Suggested Municipal Action:</strong> <span id="admin-ai-action">--</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Photo Evidence Card -->
+        <div class="card" style="margin-bottom: var(--space-6);">
+          <div class="card-header flex-between">
+            <h2 class="card-title">Photo Evidence</h2>
+            <span id="admin-photo-badge" class="status-badge status-reported">Photograph</span>
+          </div>
+          <div class="card-body" style="padding: 0; overflow: hidden; border-radius: var(--radius-md);">
+            <div id="admin-photo-placeholder" style="padding: var(--space-6); text-align: center; color: var(--color-text-muted); font-size: var(--font-size-sm); background: var(--color-bg);">
+              📷 No image available.
+            </div>
+            <img id="admin-photo-img" src="" alt="Issue Photo" style="width: 100%; max-height: 240px; object-fit: contain; background: #0f172a; display: none;">
+          </div>
+        </div>
+
+        <!-- Geographic Location & Map Card -->
+        <div class="card">
+          <div class="card-header flex-between">
+            <h2 class="card-title">Geographic Location</h2>
+            <span id="admin-coords-badge" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Lat: --, Lng: --</span>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom: var(--space-3); font-size: var(--font-size-sm);">
+              <strong>Address:</strong> <span id="admin-address-text">--</span>
+            </div>
+            <div id="admin-details-map" class="map-container" style="min-height: 260px; border-radius: var(--radius-md); border: 1px solid var(--color-border); z-index: 1;"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Municipal Administration Portal. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="../data/mock-data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/admin-issue-details.js"></script>
+</body>
+</html>

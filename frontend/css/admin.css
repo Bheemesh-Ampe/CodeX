@@ -1,0 +1,133 @@
+/* ==========================================================================
+   CIVICFIX — Administrator Dashboard Stylesheet (css/admin.css)
+   Administrative operations, analytics metrics, and data tables
+   ========================================================================== */
+
+/* Admin Navigation Header Bar */
+.admin-theme .site-header {
+  background-color: #0f172a;
+  border-bottom: 1px solid #1e293b;
+}
+
+.admin-theme .brand-logo {
+  color: #ffffff;
+}
+
+.admin-theme .brand-badge {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.admin-theme .nav-link {
+  color: #94a3b8;
+}
+
+.admin-theme .nav-link:hover {
+  color: #ffffff;
+  background-color: #1e293b;
+}
+
+.admin-theme .nav-link.active {
+  color: #38bdf8;
+  background-color: #1e293b;
+}
+
+.admin-theme .nav-toggle {
+  color: #ffffff;
+  border-color: #334155;
+}
+
+@media (max-width: 840px) {
+  .admin-theme .nav-menu {
+    background-color: #0f172a;
+    border-bottom: 1px solid #1e293b;
+  }
+}
+
+/* Metric / Stat Cards */
+.stat-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.stat-title {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.stat-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.stat-value {
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  color: var(--color-text-main);
+  line-height: 1.2;
+}
+
+.stat-footer {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-2);
+}
+
+/* Data Table Component */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.admin-table th {
+  background-color: var(--color-surface-muted);
+  padding: var(--space-3) var(--space-4);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  text-transform: uppercase;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.05em;
+}
+
+.admin-table td {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:hover {
+  background-color: var(--color-bg);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}

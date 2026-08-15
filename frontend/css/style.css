@@ -1,0 +1,725 @@
+/* ==========================================================================
+   CIVICFIX — Design System & Common Stylesheet (css/style.css)
+   Professional, accessible, responsive Vanilla CSS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design Tokens & CSS Custom Properties
+   -------------------------------------------------------------------------- */
+:root {
+  /* Brand Palette — Civic Blue */
+  --color-primary: #1e40af;          /* Deep Civic Blue */
+  --color-primary-light: #3b82f6;    /* Vibrant Action Blue */
+  --color-primary-hover: #1d4ed8;    /* Focused Blue */
+  --color-primary-subtle: #eff6ff;   /* Light Blue Tint */
+  --color-primary-border: #bfdbfe;   /* Border Accent */
+
+  /* Semantic State Colors */
+  --color-success: #059669;          /* Emerald Green (Resolved) */
+  --color-success-subtle: #ecfdf5;
+  --color-success-border: #a7f3d0;
+  
+  --color-warning: #d97706;          /* Amber (In Review / Reported) */
+  --color-warning-subtle: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #dc2626;           /* Crimson Red (Critical / Rejected) */
+  --color-danger-subtle: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #0284c7;             /* Cyan/Sky (In Progress) */
+  --color-info-subtle: #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  /* Priority Palette */
+  --priority-low: #475569;
+  --priority-low-bg: #f1f5f9;
+  --priority-medium: #d97706;
+  --priority-medium-bg: #fffbeb;
+  --priority-high: #ea580c;
+  --priority-high-bg: #fff7ed;
+  --priority-critical: #dc2626;
+  --priority-critical-bg: #fef2f2;
+
+  /* Neutrals, Surfaces & Backgrounds */
+  --color-bg: #f8fafc;               /* Soft Clean Background */
+  --color-surface: #ffffff;          /* Pure White Card Surface */
+  --color-surface-muted: #f1f5f9;    /* Alt Surface */
+  --color-border: #e2e8f0;           /* Subtle Dividers */
+  --color-border-hover: #cbd5e1;
+  
+  /* Typography Colors */
+  --color-text-main: #0f172a;        /* High Contrast Dark Slate */
+  --color-text-body: #334155;        /* Standard Body Slate */
+  --color-text-muted: #64748b;       /* Secondary Muted Slate */
+  --color-text-inverse: #ffffff;     /* White on Dark */
+
+  /* Typography Scale */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+
+  /* Shadows & Depth */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base Reset
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-body);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   3. Core Reusable Layout Components
+   -------------------------------------------------------------------------- */
+
+/* .container */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+/* .section */
+.section {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+.section-sm {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.section-lg {
+  padding-top: var(--space-12);
+  padding-bottom: var(--space-12);
+}
+
+/* .page-header */
+.page-header {
+  margin-bottom: var(--space-6);
+}
+
+.page-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  color: var(--color-text-main);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  margin-bottom: var(--space-2);
+}
+
+.page-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  max-width: 680px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Reusable Cards (.card)
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
+}
+
+.card:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.card-body {
+  margin-bottom: var(--space-4);
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   5. Reusable Buttons (.button, .primary-button, .secondary-button)
+   -------------------------------------------------------------------------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.625rem 1.25rem;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  line-height: 1.5;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* .primary-button */
+.primary-button,
+.button.primary-button {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary-button:hover,
+.button.primary-button:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-md);
+}
+
+/* .secondary-button */
+.secondary-button,
+.button.secondary-button {
+  background-color: var(--color-surface);
+  color: var(--color-text-main);
+  border-color: var(--color-border);
+}
+
+.secondary-button:hover,
+.button.secondary-button:hover {
+  background-color: var(--color-surface-muted);
+  border-color: var(--color-border-hover);
+}
+
+/* Modifier buttons */
+.button-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: var(--font-size-xs);
+}
+
+.button-lg {
+  padding: 0.875rem 1.75rem;
+  font-size: var(--font-size-base);
+}
+
+.button-danger {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.button-danger:hover {
+  background-color: #b91c1c;
+}
+
+/* --------------------------------------------------------------------------
+   6. Badges (.status-badge, .priority-badge)
+   -------------------------------------------------------------------------- */
+.status-badge,
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+/* Status variants */
+.status-reported,
+.status-badge.status-reported {
+  background-color: var(--color-warning-subtle);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+}
+
+.status-in-review,
+.status-badge.status-in-review {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #d8b4fe;
+}
+
+.status-in-progress,
+.status-badge.status-in-progress {
+  background-color: var(--color-info-subtle);
+  color: var(--color-info);
+  border: 1px solid var(--color-info-border);
+}
+
+.status-resolved,
+.status-badge.status-resolved {
+  background-color: var(--color-success-subtle);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.status-rejected,
+.status-badge.status-rejected {
+  background-color: var(--color-danger-subtle);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+}
+
+/* Priority variants */
+.priority-low,
+.priority-badge.priority-low {
+  background-color: var(--priority-low-bg);
+  color: var(--priority-low);
+  border: 1px solid var(--color-border);
+}
+
+.priority-medium,
+.priority-badge.priority-medium {
+  background-color: var(--priority-medium-bg);
+  color: var(--priority-medium);
+  border: 1px solid var(--color-warning-border);
+}
+
+.priority-high,
+.priority-badge.priority-high {
+  background-color: var(--priority-high-bg);
+  color: var(--priority-high);
+  border: 1px solid #fed7aa;
+}
+
+.priority-critical,
+.priority-badge.priority-critical {
+  background-color: var(--priority-critical-bg);
+  color: var(--priority-critical);
+  border: 1px solid var(--color-danger-border);
+}
+
+/* --------------------------------------------------------------------------
+   7. Form Controls (.form-group, .input, .textarea) & Validation
+   -------------------------------------------------------------------------- */
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin-bottom: var(--space-2);
+}
+
+.form-label .required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.65rem 0.875rem;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-main);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Validation Feedback States */
+.input.is-invalid,
+.textarea.is-invalid,
+.select.is-invalid {
+  border-color: var(--color-danger);
+  background-color: #fffafa;
+}
+
+.input.is-invalid:focus,
+.textarea.is-invalid:focus,
+.select.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.input.is-valid,
+.textarea.is-valid,
+.select.is-valid {
+  border-color: var(--color-success);
+}
+
+.error-message {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  margin-top: var(--space-1);
+  display: none;
+  font-weight: 600;
+}
+
+.error-message.show {
+  display: block;
+}
+
+.form-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* Alert Notification Banners */
+.alert {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-6);
+  display: none;
+  align-items: flex-start;
+  gap: var(--space-3);
+  line-height: 1.5;
+}
+
+.alert.show {
+  display: flex;
+}
+
+.alert-success {
+  background-color: var(--color-success-subtle);
+  border: 1px solid var(--color-success-border);
+  color: #065f46;
+}
+
+.alert-danger {
+  background-color: var(--color-danger-subtle);
+  border: 1px solid var(--color-danger-border);
+  color: #991b1b;
+}
+
+/* --------------------------------------------------------------------------
+   8. Map Container (.map-container)
+   -------------------------------------------------------------------------- */
+.map-container {
+  width: 100%;
+  min-height: 320px;
+  background-color: #e2e8f0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.map-placeholder {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+}
+
+.map-placeholder-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-2);
+}
+
+/* --------------------------------------------------------------------------
+   9. Navigation Header & Responsive Bar
+   -------------------------------------------------------------------------- */
+.site-header {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* Logo */
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--color-text-main);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.brand-logo .brand-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.brand-logo .brand-name span {
+  color: var(--color-primary-light);
+}
+
+.brand-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: #0f172a;
+  color: #38bdf8;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Desktop Navigation Menu */
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-block;
+  padding: 0.5rem 0.85rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--color-text-main);
+  background-color: var(--color-surface-muted);
+}
+
+.nav-link.active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-subtle);
+  font-weight: 700;
+}
+
+.nav-portal-switch {
+  margin-left: var(--space-3);
+  padding: 0.45rem 0.85rem;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.switch-to-admin {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.switch-to-admin:hover {
+  background-color: #1e293b;
+}
+
+.switch-to-resident {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.switch-to-resident:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Mobile Hamburger Toggle */
+.nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.65rem;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: var(--color-text-main);
+}
+
+/* --------------------------------------------------------------------------
+   10. Grid Layout Utilities
+   -------------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* --------------------------------------------------------------------------
+   11. Footer
+   -------------------------------------------------------------------------- */
+.site-footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-6) 0;
+  margin-top: auto;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   12. Responsive Breakpoints (Mobile & Tablet)
+   -------------------------------------------------------------------------- */
+@media (max-width: 840px) {
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-4);
+    box-shadow: var(--shadow-lg);
+    display: none;
+  }
+
+  .nav-menu.open {
+    display: flex;
+  }
+
+  .nav-link {
+    padding: 0.75rem 1rem;
+  }
+
+  .nav-portal-switch {
+    margin-left: 0;
+    margin-top: var(--space-2);
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr;
+  }
+
+  .page-title {
+    font-size: var(--font-size-2xl);
+  }
+}

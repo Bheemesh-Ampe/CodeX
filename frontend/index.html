@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX — Report Local Problems. Build Better Communities.</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/resident.css">
+</head>
+<body>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-icon">🏛️</span>
+        <span class="brand-name">CIVIC<span>FIX</span></span>
+      </a>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <!-- Navigation Links -->
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="report.html" class="nav-link">Report Issue</a></li>
+        <li><a href="issues.html" class="nav-link">My Issues</a></li>
+        <li>
+          <a href="admin/dashboard.html" class="nav-portal-switch switch-to-admin">
+            🛡️ Admin Portal
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container section">
+    
+    <!-- 1. Hero Section -->
+    <section class="resident-hero">
+      <h1>Report Local Problems. Build Better Communities.</h1>
+      <p>CIVICFIX helps residents report local civic issues and helps administrators understand and act on them.</p>
+      
+      <div class="hero-btn-group">
+        <a href="report.html" class="button button-lg btn-white">
+          📢 Report an Issue
+        </a>
+        <a href="issues.html" class="button button-lg btn-translucent">
+          🔍 Track My Issues
+        </a>
+      </div>
+    </section>
+
+    <!-- 2. How It Works Section (4 Cards) -->
+    <section class="section-sm">
+      <div class="page-header">
+        <h2 class="page-title">How It Works</h2>
+        <p class="page-subtitle">A seamless, AI-assisted process from citizen report to verified municipal resolution.</p>
+      </div>
+
+      <div class="grid grid-cols-4">
+        
+        <!-- Card 1: Report -->
+        <div class="card step-card">
+          <div class="step-badge">1</div>
+          <div class="step-icon">📸</div>
+          <h3 class="step-title">Report</h3>
+          <p class="step-desc">
+            Take a clear photo and describe the problem — whether it's a dangerous pothole, broken streetlight, or burst water pipe.
+          </p>
+        </div>
+
+        <!-- Card 2: Locate -->
+        <div class="card step-card">
+          <div class="step-badge">2</div>
+          <div class="step-icon">📍</div>
+          <h3 class="step-title">Locate</h3>
+          <p class="step-desc">
+            Pinpoint the exact street location on the map so municipal maintenance crews know precisely where to deploy.
+          </p>
+        </div>
+
+        <!-- Card 3: AI Understands -->
+        <div class="card step-card">
+          <div class="step-badge">3</div>
+          <div class="step-icon">🤖</div>
+          <h3 class="step-title">AI Understands</h3>
+          <p class="step-desc">
+            Generative AI analyzes your report instantly, suggesting the right municipal category, priority level, and actionable repair steps.
+          </p>
+        </div>
+
+        <!-- Card 4: Action -->
+        <div class="card step-card">
+          <div class="step-badge">4</div>
+          <div class="step-icon">🛠️</div>
+          <h3 class="step-title">Action</h3>
+          <p class="step-desc">
+            City administrators review the triage queue, dispatch crews to fix the problem, and publish real-time status updates.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. Civic Issues Preview Section (Map Visual Placeholder) -->
+    <section class="section" style="padding-top: var(--space-10);">
+      
+      <div class="map-preview-wrapper">
+        <div class="map-preview-header">
+          <div>
+            <h2 class="page-title" style="font-size: var(--font-size-2xl);">Civic Issues Near You</h2>
+            <p class="page-subtitle">Explore open community reports and active municipal resolution projects in real time.</p>
+          </div>
+
+          <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+            <span class="status-badge status-reported">🟡 5 Reported</span>
+            <span class="status-badge status-in-progress">🔵 3 In Progress</span>
+            <span class="status-badge status-resolved">🟢 4 Resolved</span>
+          </div>
+        </div>
+
+        <!-- Visual Map Placeholder -->
+        <div class="map-container map-preview-container">
+          
+          <!-- Mock Location Pins Overlay -->
+          <div class="map-mock-pins">
+            <div class="mock-pin pin-1">
+              <span>🕳️</span> Pothole (In Progress)
+            </div>
+            <div class="mock-pin pin-2">
+              <span>💡</span> Streetlight (Reported)
+            </div>
+            <div class="mock-pin pin-3">
+              <span>🚰</span> Water Leak (Resolved)
+            </div>
+          </div>
+
+          <!-- Map Placeholder Central Info Box -->
+          <div class="map-placeholder">
+            <div class="map-placeholder-icon">🗺️</div>
+            <h3 style="font-size: var(--font-size-xl); font-weight: 800; color: var(--color-text-main); margin-bottom: var(--space-2);">
+              Interactive Community Map
+            </h3>
+            <p style="font-size: var(--font-size-sm); color: var(--color-text-muted); max-width: 520px; margin: 0 auto var(--space-6);">
+              Live geographic issue clustering will render here in upcoming steps. Residents can explore nearby issues and track repair progress directly on the map.
+            </p>
+            <div style="display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap;">
+              <a href="report.html" class="button primary-button">
+                ➕ Report an Issue at Your Location
+              </a>
+              <a href="issues.html" class="button secondary-button">
+                📋 Browse Issue Feed
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Citizen Civic Issue Reporting Platform. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="data/mock-data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

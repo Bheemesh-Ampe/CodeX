@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX — Report an Issue</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet.js CSS (OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/resident.css">
+</head>
+<body>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-icon">🏛️</span>
+        <span class="brand-name">CIVIC<span>FIX</span></span>
+      </a>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <!-- Navigation Links -->
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="report.html" class="nav-link active">Report Issue</a></li>
+        <li><a href="issues.html" class="nav-link">My Issues</a></li>
+        <li>
+          <a href="admin/dashboard.html" class="nav-portal-switch switch-to-admin">
+            🛡️ Admin Portal
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container section">
+    
+    <div class="page-header">
+      <h1 class="page-title">📢 Report a Civic Issue</h1>
+      <p class="page-subtitle">Provide details, attach a photo, and set the location. Use AI to auto-classify and prioritize before submission.</p>
+    </div>
+
+    <!-- Alert Banner for Form-Level Feedback -->
+    <div id="form-alert" class="alert alert-danger" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <div id="form-alert-message">Please correct the highlighted fields before submitting.</div>
+    </div>
+
+    <!-- Issue Reporting Card & Form -->
+    <div id="report-form-card" class="card">
+      <div class="card-header">
+        <h2 class="card-title">Civic Issue Details</h2>
+        <span class="status-badge status-reported">New Report</span>
+      </div>
+
+      <div class="card-body">
+        <form id="issue-report-form" novalidate>
+          
+          <!-- 1. Title Input (Backend field: title) -->
+          <div class="form-group">
+            <label for="title" class="form-label">
+              Issue Title <span class="required">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="title" 
+              name="title" 
+              class="input" 
+              placeholder="e.g. Hazardous deep pothole on MG Road"
+              maxlength="200"
+              required
+            >
+            <div id="title-error" class="error-message">Please enter a descriptive title (at least 3 characters).</div>
+            <p class="form-hint">A concise summary of the problem (e.g. Pothole, Broken Streetlight, Water Leak).</p>
+          </div>
+
+          <!-- 2. Category Dropdown (Backend field: category) -->
+          <div class="form-group">
+            <label for="category" class="form-label">
+              Category <span class="required">*</span>
+            </label>
+            <select id="category" name="category" class="select" required>
+              <option value="" disabled selected>-- Select an Issue Category --</option>
+              <option value="Pothole">Pothole</option>
+              <option value="Garbage">Garbage</option>
+              <option value="Streetlight">Streetlight</option>
+              <option value="Water Leakage">Water Leakage</option>
+              <option value="Drainage">Drainage</option>
+              <option value="Road Damage">Road Damage</option>
+              <option value="Other">Other</option>
+            </select>
+            <div id="category-error" class="error-message">Please select an appropriate issue category.</div>
+          </div>
+
+          <!-- 3. Description (Backend field: description) -->
+          <div class="form-group">
+            <label for="description" class="form-label">
+              Description <span class="required">*</span>
+            </label>
+            <textarea 
+              id="description" 
+              name="description" 
+              class="textarea" 
+              placeholder="Describe the issue in detail, its exact spot, size, severity, and any danger to pedestrians or vehicular traffic..."
+              required
+            ></textarea>
+            <div id="description-error" class="error-message">Please provide a detailed description (at least 5 characters).</div>
+          </div>
+
+          <!-- 4. Photo Upload Area (Backend field: image_path) -->
+          <div class="form-group">
+            <label class="form-label">Photograph / Visual Evidence</label>
+            
+            <!-- Hidden native file input -->
+            <input type="file" id="photo-input" accept="image/png, image/jpeg, image/jpg, image/webp" style="display: none;">
+
+            <!-- Upload Dropzone (shown when no image is selected) -->
+            <div id="upload-dropzone" class="upload-dropzone">
+              <div style="font-size: 2.5rem; margin-bottom: var(--space-2);">📷</div>
+              <p style="font-weight: 700; font-size: var(--font-size-base); color: var(--color-text-main); margin-bottom: var(--space-1);">
+                Click to browse photo or drag & drop image here
+              </p>
+              <p class="form-hint">Supports PNG, JPG, JPEG, WEBP (Max 5MB)</p>
+            </div>
+
+            <!-- Inline Photo Validation Error -->
+            <div id="photo-error" class="error-message"></div>
+
+            <!-- Image Preview Card (shown when an image is selected) -->
+            <div id="photo-preview-container" class="photo-preview-card" style="display: none;">
+              <div class="photo-preview-wrapper">
+                <img id="photo-preview-img" src="" alt="Selected Civic Issue Photo Preview">
+              </div>
+              <div class="photo-preview-info">
+                <div class="photo-file-meta">
+                  <span class="photo-icon">🖼️</span>
+                  <div style="overflow: hidden;">
+                    <div id="photo-filename" class="photo-filename">evidence.jpg</div>
+                    <div id="photo-filesize" class="photo-filesize">1.2 MB</div>
+                  </div>
+                </div>
+                <div class="photo-preview-actions">
+                  <button type="button" id="btn-change-photo" class="button secondary-button button-sm">
+                    🔄 Change Photo
+                  </button>
+                  <button type="button" id="btn-remove-photo" class="button button-danger button-sm">
+                    🗑️ Remove Image
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden storage for image path string -->
+            <input type="hidden" id="image_path" name="image_path" value="">
+          </div>
+
+          <!-- Step 8: Generative AI Analysis Section -->
+          <div class="form-group" style="margin-top: var(--space-6);">
+            <div class="flex-between" style="flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2);">
+              <label class="form-label" style="margin-bottom: 0;">
+                AI Issue Triage (Generative AI)
+              </label>
+              <button type="button" id="btn-ai-analyze" class="button primary-button button-sm" style="background: linear-gradient(135deg, #059669 0%, #0284c7 100%);">
+                ✨ Analyze Issue with AI
+              </button>
+            </div>
+
+            <!-- AI Loading State Box -->
+            <div id="ai-loading-box" class="ai-loading-box" style="display: none;">
+              <div class="ai-spinner"></div>
+              <span>Analyzing report with Groq AI triage models...</span>
+            </div>
+
+            <!-- AI Failure State Banner -->
+            <div id="ai-failure-box" class="alert alert-danger" style="display: none; margin-top: var(--space-2);">
+              <span>⚠️</span>
+              <span>AI analysis is currently unavailable. You can still submit the issue.</span>
+            </div>
+
+            <!-- AI Generated Analysis Card (Success State) -->
+            <div id="ai-analysis-card" class="ai-card" style="display: none; margin-top: var(--space-2);">
+              <div class="ai-card-header">
+                <div class="ai-card-title">
+                  <span>🤖</span> AI Generated Analysis
+                </div>
+                <span class="status-badge status-resolved">Groq AI Verified</span>
+              </div>
+
+              <div class="ai-card-body">
+                <p id="ai-display-summary" style="font-weight: 600; margin-bottom: var(--space-3); color: #166534;">
+                  --
+                </p>
+
+                <div class="ai-meta-grid">
+                  <div class="ai-meta-item">
+                    <strong>AI Recommended Category</strong>
+                    <span id="ai-display-category" class="status-badge status-in-progress">--</span>
+                  </div>
+                  <div class="ai-meta-item">
+                    <strong>AI Triage Priority</strong>
+                    <span id="ai-display-priority" class="priority-badge priority-high">--</span>
+                  </div>
+                </div>
+
+                <p style="font-size: var(--font-size-xs); color: #15803d; margin-top: var(--space-2);">
+                  <strong>Suggested Municipal Action:</strong> <span id="ai-display-action">--</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Hidden inputs to store AI analysis values -->
+            <input type="hidden" id="ai_summary" name="ai_summary" value="">
+            <input type="hidden" id="ai_category" name="ai_category" value="">
+            <input type="hidden" id="ai_priority" name="ai_priority" value="">
+            <input type="hidden" id="ai_suggested_action" name="ai_suggested_action" value="">
+          </div>
+
+          <!-- 5. Location Section with Interactive Map (Backend fields: latitude, longitude, address) -->
+          <div class="form-group" style="margin-top: var(--space-8);">
+            <div class="flex-between" style="margin-bottom: var(--space-2); flex-wrap: wrap; gap: var(--space-2);">
+              <label class="form-label" style="margin-bottom: 0;">
+                Location on Map <span class="required">*</span>
+              </label>
+              <button type="button" id="btn-current-location" class="button secondary-button button-sm">
+                📍 Use My Current Location
+              </button>
+            </div>
+
+            <!-- Location Status / Notice Banner -->
+            <div id="location-notice" class="location-notice"></div>
+
+            <!-- Address Input (Manual Entry) -->
+            <div style="margin-bottom: var(--space-4);">
+              <label for="address" class="form-label" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                Street Address / Landmark (Optional)
+              </label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                class="input" 
+                placeholder="e.g. MG Road, Near Metro Station Gate 2"
+              >
+            </div>
+
+            <!-- Coordinates Inputs (Auto-synced with draggable map marker) -->
+            <div class="location-inputs-grid">
+              <div>
+                <label for="latitude" class="form-label" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                  Latitude (DD) <span class="required">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  step="any" 
+                  id="latitude" 
+                  name="latitude" 
+                  class="input" 
+                  placeholder="e.g. 12.9716"
+                  required
+                >
+                <div id="latitude-error" class="error-message">Valid latitude between -90 and 90 is required.</div>
+              </div>
+
+              <div>
+                <label for="longitude" class="form-label" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                  Longitude (DD) <span class="required">*</span>
+                </label>
+                <input 
+                  type="number" 
+                  step="any" 
+                  id="longitude" 
+                  name="longitude" 
+                  class="input" 
+                  placeholder="e.g. 77.5946"
+                  required
+                >
+                <div id="longitude-error" class="error-message">Valid longitude between -180 and 180 is required.</div>
+              </div>
+            </div>
+
+            <!-- Interactive Leaflet Map Container -->
+            <div id="report-map" class="map-container"></div>
+            <p class="form-hint" style="margin-top: var(--space-2);">
+              💡 <strong>Tip:</strong> Click anywhere on the map or drag the pin marker to fine-tune the issue's exact location.
+            </p>
+          </div>
+
+          <!-- Form Actions -->
+          <div style="display: flex; gap: var(--space-4); margin-top: var(--space-8); flex-wrap: wrap;">
+            <button type="submit" id="btn-submit-issue" class="button primary-button button-lg">
+              📢 Submit Issue
+            </button>
+            <button type="button" id="btn-reset-form" class="button secondary-button button-lg">
+              Reset Form
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Step 9: Submission Success Card / Modal -->
+    <div id="submission-success-card" class="submission-success-modal">
+      <div class="submission-icon">🎉</div>
+      <h2 style="font-size: var(--font-size-2xl); font-weight: 800; color: var(--color-text-main); margin-bottom: var(--space-2);">
+        Your issue has been reported successfully.
+      </h2>
+      <p style="color: var(--color-text-muted); font-size: var(--font-size-base); max-width: 500px; margin: 0 auto;">
+        Your report has been assigned a unique tracking number and routed to the municipal dispatch queue.
+      </p>
+
+      <div>
+        <div id="submission-id-badge" class="submission-id-badge">
+          Issue #--
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4);">
+        <a id="btn-view-details" href="issue-details.html" class="button primary-button button-lg">
+          🔍 View Issue Details →
+        </a>
+        <button type="button" id="btn-report-another" class="button secondary-button button-lg">
+          Report Another Issue
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Citizen Civic Issue Reporting Platform. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data/mock-data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/report.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" class="admin-theme">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX Admin — Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-theme">
+
+  <!-- Admin Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="dashboard.html" class="brand-logo">
+        <span class="brand-icon">🛡️</span>
+        <span class="brand-name">CIVIC<span>FIX</span> <span class="brand-badge">ADMIN</span></span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <ul class="nav-menu">
+        <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+        <li><a href="issues.html" class="nav-link">Issues</a></li>
+        <li><a href="map.html" class="nav-link">Map</a></li>
+        <li>
+          <a href="../index.html" class="nav-portal-switch switch-to-resident">
+            👤 Resident View
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container section">
+    
+    <div class="page-header flex-between" style="flex-wrap: wrap; gap: var(--space-4);">
+      <div>
+        <h1 class="page-title">🛡️ Municipal Operations Dashboard</h1>
+        <p class="page-subtitle">Real-time overview of incoming civic reports, AI triage priorities, and department resolution workloads.</p>
+      </div>
+      <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+        <a href="issues.html" class="button primary-button">📋 Manage Issues</a>
+        <a href="map.html" class="button secondary-button">🗺️ City Map</a>
+      </div>
+    </div>
+
+    <!-- 4 Key Admin Statistics Cards -->
+    <div class="grid grid-cols-4" style="margin-bottom: var(--space-8);">
+      
+      <!-- Stat 1: Total Issues -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Total Issues</span>
+          <span class="stat-icon">📊</span>
+        </div>
+        <div id="stat-total" class="stat-value">--</div>
+        <div class="stat-footer">All logged reports</div>
+      </div>
+
+      <!-- Stat 2: Open Issues -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Open Issues</span>
+          <span class="status-badge status-reported">Active</span>
+        </div>
+        <div id="stat-open" class="stat-value" style="color: var(--color-warning);">--</div>
+        <div class="stat-footer">Reported / Under Review / Assigned</div>
+      </div>
+
+      <!-- Stat 3: High Priority -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">High Priority</span>
+          <span class="priority-badge priority-high">Urgent</span>
+        </div>
+        <div id="stat-high" class="stat-value" style="color: var(--color-danger);">--</div>
+        <div class="stat-footer">High & Critical urgency</div>
+      </div>
+
+      <!-- Stat 4: Resolved -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Resolved</span>
+          <span class="status-badge status-resolved">Done</span>
+        </div>
+        <div id="stat-resolved" class="stat-value" style="color: var(--color-success);">--</div>
+        <div class="stat-footer">Completed actions</div>
+      </div>
+
+    </div>
+
+    <!-- Recent Issues Section -->
+    <div class="card">
+      <div class="card-header flex-between" style="flex-wrap: wrap; gap: var(--space-2);">
+        <h2 class="card-title">Recent Civic Reports</h2>
+        <a href="issues.html" class="button secondary-button button-sm">View All in Table →</a>
+      </div>
+      <div class="card-body" style="padding: 0; overflow-x: auto;">
+        
+        <table class="table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Issue Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="recent-issues-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: var(--space-6); color: var(--color-text-muted);">
+                Loading recent issues...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Municipal Administration Portal. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../data/mock-data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

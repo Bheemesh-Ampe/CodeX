@@ -8,7 +8,7 @@ router = APIRouter(prefix="/reports", tags=["Reports (Legacy Alias)"])
 
 # Re-mount issue route handlers with /reports prefix
 router.add_api_route("", issues.create_issue, methods=["POST"], response_model=issues.IssueResponse, status_code=status.HTTP_201_CREATED)
-router.add_api_route("", issues.list_issues, methods=["GET"], response_model=List[issues.IssueResponse])
+router.add_api_route("", issues.list_issues, methods=["GET"], response_model=issues.IssueListResponse)
 router.add_api_route("/stats/summary", issues.get_stats_summary, methods=["GET"], response_model=issues.IssueStatsResponse)
 router.add_api_route("/seed", issues.seed_issues, methods=["POST"])
 router.add_api_route("/{issue_id}", issues.get_issue, methods=["GET"], response_model=issues.IssueResponse)

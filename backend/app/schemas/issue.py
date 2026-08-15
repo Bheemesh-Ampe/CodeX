@@ -9,11 +9,12 @@ from app.schemas.issue_update import IssueUpdateResponse
 
 
 class IssueStatus(str, Enum):
-    """Supported statuses for an issue (Prompt 6)."""
+    """Supported statuses for an issue."""
 
     REPORTED = "REPORTED"
     ACKNOWLEDGED = "ACKNOWLEDGED"
     IN_REVIEW = "IN_REVIEW"
+    ASSIGNED = "ASSIGNED"
     IN_PROGRESS = "IN_PROGRESS"
     RESOLVED = "RESOLVED"
     REJECTED = "REJECTED"
@@ -35,7 +36,7 @@ class AIAnalysisResult(BaseModel):
     priority: str = Field(..., json_schema_extra={"example": "HIGH"})
     summary: str = Field(..., json_schema_extra={"example": "Severe pothole damaging vehicles."})
     suggested_action: str = Field(..., json_schema_extra={"example": "Dispatch road maintenance team for emergency asphalt patching."})
-    ai_status: str = Field(default="success", json_schema_extra={"example": "success"})  # "success" or "fallback"
+    ai_status: str = Field(default="success", json_schema_extra={"example": "success"})
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -82,6 +83,10 @@ class IssueBase(BaseModel):
         None,
         json_schema_extra={"example": "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7"},
     )
+    ai_summary: Optional[str] = None
+    ai_category: Optional[str] = None
+    ai_priority: Optional[str] = None
+    ai_suggested_action: Optional[str] = None
 
     @field_validator("title", "description")
     @classmethod
@@ -97,7 +102,6 @@ class IssueBase(BaseModel):
     @classmethod
     def sync_image_fields(cls, data):
         if isinstance(data, dict):
-            # If image is passed instead of image_path, populate image_path
             if data.get("image") and not data.get("image_path"):
                 data["image_path"] = data["image"]
             elif data.get("image_path") and not data.get("image"):
@@ -143,7 +147,7 @@ class IssueUpdateSchema(BaseModel):
 
 
 class IssueStatusUpdate(BaseModel):
-    """Schema for administrator status transitions (Prompt 6)."""
+    """Schema for administrator status transitions."""
 
     status: IssueStatus = Field(..., json_schema_extra={"example": IssueStatus.ACKNOWLEDGED})
     priority: Optional[IssuePriority] = Field(None, json_schema_extra={"example": IssuePriority.HIGH})

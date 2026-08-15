@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX — Resident Issue Details</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet.js CSS (OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/resident.css">
+</head>
+<body>
+
+  <!-- Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="index.html" class="brand-logo">
+        <span class="brand-icon">🏛️</span>
+        <span class="brand-name">CIVIC<span>FIX</span></span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="report.html" class="nav-link">Report Issue</a></li>
+        <li><a href="issues.html" class="nav-link active">My Issues</a></li>
+        <li>
+          <a href="admin/dashboard.html" class="nav-portal-switch switch-to-admin">
+            🛡️ Admin Portal
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container section">
+    
+    <!-- Top Back Link & Header -->
+    <div class="page-header flex-between" style="flex-wrap: wrap; gap: var(--space-4);">
+      <div>
+        <a href="issues.html" class="button secondary-button button-sm" style="margin-bottom: var(--space-2);">
+          ← Back to My Issues
+        </a>
+        <h1 id="issue-title" class="page-title">Loading Issue Details...</h1>
+        <p id="issue-meta-subtitle" class="page-subtitle">Fetching record from municipal registry...</p>
+      </div>
+      <div id="header-badges" style="display: flex; gap: var(--space-2); align-items: center;">
+        <span id="issue-status-badge" class="status-badge status-reported">Loading</span>
+        <span id="issue-priority-badge" class="priority-badge priority-medium">Priority</span>
+      </div>
+    </div>
+
+    <!-- Error State Box -->
+    <div id="details-error" class="alert alert-danger" style="display: none; margin-bottom: var(--space-6);">
+      <span>⚠️</span>
+      <div>
+        <p id="details-error-msg" style="font-weight: 700;">Issue not found.</p>
+        <a href="issues.html" class="button secondary-button button-sm" style="margin-top: var(--space-2);">
+          Return to My Issues
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="details-content">
+      
+      <!-- Stepper Status Progression Tracker -->
+      <div class="card" style="margin-bottom: var(--space-6); padding: var(--space-4);">
+        <div style="font-size: var(--font-size-xs); font-weight: 800; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: var(--space-3);">
+          Resolution Lifecycle
+        </div>
+        <div class="lifecycle-stepper" id="lifecycle-stepper" style="display: flex; justify-content: space-between; position: relative; overflow-x: auto; gap: var(--space-2);">
+          <div class="step-node" id="step-REPORTED" style="text-align: center; flex: 1;">
+            <div class="node-circle">1</div>
+            <div class="node-label">REPORTED</div>
+          </div>
+          <div class="step-node" id="step-IN_REVIEW" style="text-align: center; flex: 1;">
+            <div class="node-circle">2</div>
+            <div class="node-label">UNDER REVIEW</div>
+          </div>
+          <div class="step-node" id="step-ASSIGNED" style="text-align: center; flex: 1;">
+            <div class="node-circle">3</div>
+            <div class="node-label">ASSIGNED</div>
+          </div>
+          <div class="step-node" id="step-IN_PROGRESS" style="text-align: center; flex: 1;">
+            <div class="node-circle">4</div>
+            <div class="node-label">IN PROGRESS</div>
+          </div>
+          <div class="step-node" id="step-RESOLVED" style="text-align: center; flex: 1;">
+            <div class="node-circle">5</div>
+            <div class="node-label">RESOLVED</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Details Grid Layout -->
+      <div class="grid grid-cols-2">
+        
+        <!-- Left Column: Information, AI Analysis & Timeline -->
+        <div>
+          <!-- Issue Information Card -->
+          <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header flex-between">
+              <h2 class="card-title">Issue Information</h2>
+              <span id="issue-category-badge" class="priority-badge priority-low">Category: --</span>
+            </div>
+            <div class="card-body">
+              <p id="issue-description" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-body); line-height: 1.6;">
+                --
+              </p>
+
+              <!-- Metadata table -->
+              <div style="background: var(--color-bg); padding: var(--space-3); border-radius: var(--radius-md); font-size: var(--font-size-xs); display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2);">
+                <div><strong>Issue ID:</strong> <span id="meta-issue-id">--</span></div>
+                <div><strong>Category:</strong> <span id="meta-category">--</span></div>
+                <div><strong>Created Date:</strong> <span id="meta-created-at">--</span></div>
+                <div><strong>Last Updated:</strong> <span id="meta-updated-at">--</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Generated Analysis Card -->
+          <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header flex-between" style="background: #f0fdf4;">
+              <h2 class="card-title" style="color: #166534; display: flex; align-items: center; gap: var(--space-2);">
+                <span>🤖</span> AI Generated Analysis
+              </h2>
+              <span class="status-badge status-resolved">Groq AI</span>
+            </div>
+            <div class="card-body" id="ai-details-body">
+              <p id="ai-summary-val" style="font-size: var(--font-size-sm); font-weight: 600; color: #166534; margin-bottom: var(--space-3);">
+                --
+              </p>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-bottom: var(--space-3); font-size: var(--font-size-xs);">
+                <div style="background: rgba(240, 253, 244, 0.7); padding: var(--space-2); border-radius: var(--radius-sm); border: 1px solid #bbf7d0;">
+                  <strong style="color: var(--color-text-muted); display: block; text-transform: uppercase;">AI Category</strong>
+                  <span id="ai-category-val">--</span>
+                </div>
+                <div style="background: rgba(240, 253, 244, 0.7); padding: var(--space-2); border-radius: var(--radius-sm); border: 1px solid #bbf7d0;">
+                  <strong style="color: var(--color-text-muted); display: block; text-transform: uppercase;">AI Priority</strong>
+                  <span id="ai-priority-val">--</span>
+                </div>
+              </div>
+              <p style="font-size: var(--font-size-xs); color: #15803d; margin: 0;">
+                <strong>Suggested Municipal Action:</strong> <span id="ai-action-val">--</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Status Resolution Timeline Card -->
+          <div class="card">
+            <div class="card-header flex-between">
+              <h2 class="card-title">Status Timeline & Updates</h2>
+              <span id="timeline-count-badge" class="status-badge status-in-progress">Updates</span>
+            </div>
+            <div class="card-body">
+              <div id="timeline-container" style="border-left: 2px solid var(--color-primary-light); padding-left: var(--space-4); margin-left: var(--space-2);">
+                <!-- Dynamic timeline loaded via js/issue-details.js -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Visual Evidence Photo & Leaflet Map -->
+        <div>
+          <!-- Photo Evidence Card -->
+          <div class="card" style="margin-bottom: var(--space-6);">
+            <div class="card-header flex-between">
+              <h2 class="card-title">Photo Evidence</h2>
+              <span id="photo-badge" class="status-badge status-reported">Photograph</span>
+            </div>
+            <div class="card-body" id="photo-card-body" style="padding: 0; overflow: hidden; border-radius: var(--radius-md);">
+              <div id="photo-placeholder" style="padding: var(--space-8); text-align: center; color: var(--color-text-muted); font-size: var(--font-size-sm); background: var(--color-bg);">
+                📷 No image available.
+              </div>
+              <img id="issue-photo-img" src="" alt="Issue Photograph" style="width: 100%; max-height: 280px; object-fit: contain; background: #0f172a; display: none;">
+            </div>
+          </div>
+
+          <!-- Location Map Card -->
+          <div class="card">
+            <div class="card-header flex-between">
+              <h2 class="card-title">Location Map</h2>
+              <span id="issue-coords-badge" style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Lat: --, Lng: --</span>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom: var(--space-3); font-size: var(--font-size-sm);">
+                <strong>Address / Landmark:</strong> <span id="details-address-text">--</span>
+              </div>
+              <div id="details-map" class="map-container" style="min-height: 280px; border-radius: var(--radius-md); border: 1px solid var(--color-border); z-index: 1;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Civic Technology Design System. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data/mock-data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/issue-details.js"></script>
+</body>
+</html>

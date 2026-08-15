@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="admin-theme">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIVICFIX Admin — City Map View</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Leaflet.js CSS (OpenStreetMap) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-theme">
+
+  <!-- Admin Site Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="dashboard.html" class="brand-logo">
+        <span class="brand-icon">🛡️</span>
+        <span class="brand-name">CIVIC<span>FIX</span> <span class="brand-badge">ADMIN</span></span>
+      </a>
+
+      <button class="nav-toggle" aria-label="Toggle Navigation" aria-expanded="false">
+        ☰
+      </button>
+
+      <ul class="nav-menu">
+        <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+        <li><a href="issues.html" class="nav-link">Issues</a></li>
+        <li><a href="map.html" class="nav-link active">Map</a></li>
+        <li>
+          <a href="../index.html" class="nav-portal-switch switch-to-resident">
+            👤 Resident View
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container section">
+    
+    <div class="page-header flex-between" style="flex-wrap: wrap; gap: var(--space-4);">
+      <div>
+        <h1 class="page-title">🗺️ Geographic Issue Distribution</h1>
+        <p class="page-subtitle">Inspect city-wide clusters of open, in-progress, and resolved municipal reports with geocoded pins.</p>
+      </div>
+      <div style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+        <span id="map-pins-count" class="status-badge status-in-progress">Loading pins...</span>
+        <a href="issues.html" class="button secondary-button button-sm">View Table List</a>
+      </div>
+    </div>
+
+    <!-- Map Viewport Card -->
+    <div class="card" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+      <div id="admin-city-map" class="map-container" style="min-height: 520px; border-radius: var(--radius-md); border: 1px solid var(--color-border); z-index: 1;"></div>
+    </div>
+
+    <!-- Map Legend -->
+    <div class="card" style="padding: var(--space-4);">
+      <div class="flex-between" style="flex-wrap: wrap; gap: var(--space-3);">
+        <div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--color-text-muted); text-transform: uppercase;">
+          Map Pin Status Legend:
+        </div>
+        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+          <span class="status-badge status-reported">🟡 Reported (Pending)</span>
+          <span class="status-badge status-in-review">🟣 Under Review</span>
+          <span class="status-badge status-in-progress">🔵 In Progress (Dispatched)</span>
+          <span class="status-badge status-resolved">🟢 Resolved (Closed)</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 CIVICFIX — Municipal Administration Portal. Built with HTML, CSS & Vanilla JS.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="../data/mock-data.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/main.js"></script>
+  <script src="../js/admin-map.js"></script>
+</body>
+</html>
